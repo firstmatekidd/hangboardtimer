@@ -3,3 +3,5 @@ TODO.md
 * Always play the three seconds of ticks before hitting each transition tone when going from HANGING to RESTING so people know the hang/rest is almost over
 * Suggest changing tick interval to every tenth of a second so that we don't accidentally skip numbers in case of drift
 * Keep affiliate and ad sections in landscape. Put them at the bottom of the right hand settings column.
+
+* Review mocks in landscape and in portrait

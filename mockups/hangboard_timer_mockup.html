@@ -1,0 +1,101 @@
+<div style="display:flex;justify-content:center;padding:1rem 0;">
+<div style="width:320px;background:#0f0f0f;border-radius:36px;overflow:hidden;border:6px solid #222;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Ubuntu,Cantarell,'Helvetica Neue',Arial,sans-serif;color:#f0ede8;">
+
+  <!-- header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 20px 8px;">
+    <h1 style="margin:0;font-size:13px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:#888;">Hangboard Timer</h1>
+    <!-- help toggle -->
+    <button id="help-btn" onclick="toggleHelp()" aria-expanded="false" aria-controls="help-panel" style="background:none;border:1px solid #333;border-radius:20px;color:#888;font-size:12px;padding:4px 10px;cursor:pointer;">? Help</button>
+  </div>
+
+  <!-- help disclosure panel -->
+  <div id="help-panel" hidden style="margin:0 16px 10px;background:#1a1a1a;border-radius:10px;padding:12px;">
+    <p style="margin:0 0 6px;font-size:12px;font-weight:600;color:#ccc;">How to use</p>
+    <p style="margin:0 0 6px;font-size:12px;color:#888;line-height:1.5;">Set your hang time, rest time, and number of sets, then press Start. The timer will alternate between hang and rest intervals and play a tone on each transition.</p>
+    <p style="margin:0;font-size:12px;color:#888;line-height:1.5;">Your settings are automatically saved and restored next time you open the app.</p>
+  </div>
+
+  <!-- timer section -->
+  <div style="display:flex;flex-direction:column;align-items:center;padding:8px 16px 4px;">
+    <div style="position:relative;width:200px;height:200px;">
+      <svg viewBox="0 0 200 200" width="200" height="200" aria-hidden="true">
+        <circle cx="100" cy="100" r="86" fill="none" stroke="#222" stroke-width="10"/>
+        <circle cx="100" cy="100" r="86" fill="none" stroke="#e8621a" stroke-width="10"
+          stroke-dasharray="540" stroke-dashoffset="135"
+          stroke-linecap="round" transform="rotate(-90 100 100)"/>
+      </svg>
+      <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <div style="font-size:64px;font-weight:700;line-height:1;color:#f0ede8;">07</div>
+        <div style="font-size:13px;font-weight:600;letter-spacing:0.16em;color:#e8621a;margin-top:4px;">HANG</div>
+      </div>
+    </div>
+    <div style="font-size:13px;color:#888;margin-top:8px;">Set 2 of 5</div>
+  </div>
+
+  <!-- controls -->
+  <div style="display:flex;gap:10px;padding:12px 20px;">
+    <button style="flex:2;background:#e8621a;color:#fff;border:none;border-radius:12px;padding:16px;font-size:16px;font-weight:600;cursor:pointer;">Pause</button>
+    <button style="flex:1;background:#1e1e1e;color:#f0ede8;border:1px solid #333;border-radius:12px;padding:16px;font-size:16px;font-weight:500;cursor:pointer;">Reset</button>
+  </div>
+
+  <!-- settings -->
+  <div style="padding:12px 20px 4px;">
+    <div style="font-size:11px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#666;margin-bottom:10px;">Settings</div>
+
+    <!-- three number inputs -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label for="m-hang" style="font-size:10px;color:#666;">Hang (s)</label>
+        <input id="m-hang" type="number" value="10" style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#f0ede8;font-size:18px;font-weight:600;padding:8px 6px;text-align:center;box-sizing:border-box;">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label for="m-rest" style="font-size:10px;color:#666;">Rest (s)</label>
+        <input id="m-rest" type="number" value="30" style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#f0ede8;font-size:18px;font-weight:600;padding:8px 6px;text-align:center;box-sizing:border-box;">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <label for="m-sets" style="font-size:10px;color:#666;">Sets</label>
+        <input id="m-sets" type="number" value="5" style="width:100%;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#f0ede8;font-size:18px;font-weight:600;padding:8px 6px;text-align:center;box-sizing:border-box;">
+      </div>
+    </div>
+
+    <!-- sound checkbox -->
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 0 12px;">
+      <input id="m-sound" type="checkbox" checked style="width:18px;height:18px;accent-color:#e8621a;cursor:pointer;flex-shrink:0;">
+      <label for="m-sound" style="font-size:13px;color:#aaa;cursor:pointer;">Enable sounds</label>
+    </div>
+  </div>
+
+  <!-- affiliate card -->
+  <div style="margin:4px 16px 10px;background:#1a1a1a;border-radius:12px;padding:12px;display:flex;align-items:center;gap:12px;">
+    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+      <rect x="4" y="14" width="32" height="5" rx="2" fill="#444"/>
+      <rect x="8" y="10" width="4" height="4" rx="1" fill="#555"/>
+      <rect x="18" y="10" width="4" height="4" rx="1" fill="#555"/>
+      <rect x="28" y="10" width="4" height="4" rx="1" fill="#555"/>
+      <rect x="10" y="19" width="3" height="8" rx="1" fill="#444"/>
+      <rect x="19" y="19" width="3" height="8" rx="1" fill="#444"/>
+      <rect x="28" y="19" width="3" height="8" rx="1" fill="#444"/>
+    </svg>
+    <div style="flex:1;">
+      <div style="font-size:12px;color:#aaa;line-height:1.4;">Train on the same board I use</div>
+      <div style="font-size:12px;color:#e8621a;margin-top:2px;">View on Amazon →</div>
+    </div>
+  </div>
+
+  <!-- ad section -->
+  <div style="margin:0 16px 20px;border:1px dashed #2a2a2a;border-radius:10px;height:60px;display:flex;align-items:center;justify-content:center;">
+    <span style="font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#444;">Advertisement</span>
+  </div>
+
+</div>
+</div>
+
+<script>
+function toggleHelp() {
+  const btn = document.getElementById('help-btn');
+  const panel = document.getElementById('help-panel');
+  const expanded = btn.getAttribute('aria-expanded') === 'true';
+  btn.setAttribute('aria-expanded', String(!expanded));
+  panel.hidden = expanded;
+}
+</script>
