@@ -18,3 +18,4 @@ A web based application for doing hangboard interval training
 * Responsive for phone displays
 * Save user settings to LocalStorage
 * Option to disable audio
+* Help section to show more info about the app
