@@ -278,6 +278,7 @@
     text-transform: uppercase;
     color: var(--text-muted);
     margin-bottom: 14px;
+    text-align: center;
   }
 
   #settings {
@@ -480,20 +481,20 @@
     margin-bottom: 20px;
   }
 
-  #affiliate-section > h2 {
+  #affiliate-section .affiliate-text h2 {
     font-family: var(--font-display);
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     font-weight: 700;
     letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--text-muted);
-    margin-bottom: 14px;
+    margin-bottom: 4px;
   }
 
   #affiliate-card {
     display: flex;
-    align-items: center;
-    gap: 16px;
+    flex-direction: column;
+    gap: 12px;
     background-color: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -501,6 +502,22 @@
     text-decoration: none;
     color: var(--text);
     transition: border-color 0.18s, background-color 0.18s;
+  }
+
+  #affiliate-card h2 {
+    font-family: var(--font-display);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  .affiliate-card-body {
+    display: flex;
+    align-items: center;
+    gap: 16px;
   }
 
   #affiliate-card:hover {
@@ -775,28 +792,25 @@
 
   <!-- Affiliate Section -->
   <section id="affiliate-section" aria-label="Recommended gear">
-    <h2>Recommended Gear</h2>
-    <!--
-      FIX: added target="_blank" — external affiliate links should open in a new tab.
-      Kept rel="noopener sponsored" per plan.
-      aria-label notes the new-tab behaviour for screen reader users.
-    -->
     <a id="affiliate-card" href="#" rel="noopener sponsored" target="_blank"
        aria-label="Shop the hangboard I use on Amazon — affiliate link, opens in new tab">
-      <div class="affiliate-icon" aria-hidden="true">
-        <svg width="36" height="28" viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <rect x="1" y="5" width="34" height="18" rx="3" stroke="#e8621a" stroke-width="1.8" fill="none"/>
-          <rect x="4" y="8" width="6" height="6" rx="1.5" fill="#e8621a" opacity="0.6"/>
-          <rect x="13" y="8" width="10" height="4" rx="1.5" fill="#e8621a" opacity="0.4"/>
-          <rect x="26" y="8" width="6" height="6" rx="1.5" fill="#e8621a" opacity="0.6"/>
-          <rect x="4" y="16" width="28" height="3" rx="1.5" fill="#e8621a" opacity="0.25"/>
-          <line x1="10" y1="1" x2="10" y2="5" stroke="#e8621a" stroke-width="1.6" stroke-linecap="round"/>
-          <line x1="26" y1="1" x2="26" y2="5" stroke="#e8621a" stroke-width="1.6" stroke-linecap="round"/>
-        </svg>
-      </div>
-      <div class="affiliate-text">
-        <p>Train on the same board I use</p>
-        <strong>Shop on Amazon →</strong>
+      <h2>Recommended Gear</h2>
+      <div class="affiliate-card-body">
+        <div class="affiliate-icon" aria-hidden="true">
+          <svg width="36" height="28" viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="1" y="5" width="34" height="18" rx="3" stroke="#e8621a" stroke-width="1.8" fill="none"/>
+            <rect x="4" y="8" width="6" height="6" rx="1.5" fill="#e8621a" opacity="0.6"/>
+            <rect x="13" y="8" width="10" height="4" rx="1.5" fill="#e8621a" opacity="0.4"/>
+            <rect x="26" y="8" width="6" height="6" rx="1.5" fill="#e8621a" opacity="0.6"/>
+            <rect x="4" y="16" width="28" height="3" rx="1.5" fill="#e8621a" opacity="0.25"/>
+            <line x1="10" y1="1" x2="10" y2="5" stroke="#e8621a" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="26" y1="1" x2="26" y2="5" stroke="#e8621a" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="affiliate-text">
+          <p>Train on the same board I use</p>
+          <strong>Shop on Amazon →</strong>
+        </div>
       </div>
     </a>
   </section>

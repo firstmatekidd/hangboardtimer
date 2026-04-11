@@ -1,9 +1,9 @@
 ## TODO
-* Ad banner at the bottom is not adhering to the fixed positioning requirement
 * Add a fanfare particle explosion when the done state is reached.
 
 
 ## DONE
+* Ad banner at the bottom is not adhering to the fixed positioning requirement
 * The timer never goes to 0 and the ring doesn't completely drain. Handle the edge case so that it goes completely to 0 and then resets to the next state, even if that means we don't see the ring completely full.
 * Use the wakeLock API to keep the screen from going to sleep while the app is in any states that are counting down.
 * Choose a different green color so that it has proper color contrast with the white text
