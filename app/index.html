@@ -632,6 +632,23 @@
     opacity: 1;
   }
 
+  /* ── Reduced motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    /* Disable tick-pulse scale animation on the countdown number */
+    #countdown.tick { animation: none; }
+
+    /* Remove all transitions — colour changes still happen, just instantly */
+    #ring-progress,
+    #state-label,
+    #btn-start { transition: none !important; }
+
+    /* Disable paused-state opacity fade */
+    #app-wrapper.paused-state #timer-ring-wrap { transition: none; }
+
+    /* Disable particle canvas entirely */
+    #particle-canvas { display: none !important; }
+  }
+
   /* ── Responsive ── */
   @media (min-width: 480px) {
     #app-wrapper { padding: 0 24px 106px; }
@@ -897,6 +914,9 @@
   let audioCtx      = null;
   let wakeLock      = null;
 
+  /* ── Reduced motion preference ── */
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
   /* ── DOM refs ── */
   const wrapper      = document.getElementById('app-wrapper');
   const countdown        = document.getElementById('countdown');
@@ -1061,9 +1081,11 @@
   function updateDisplay() {
     countdownDisplay.textContent = timeRemaining;
     countdown.setAttribute('aria-label', timeRemaining + ' seconds');
-    countdown.classList.remove('tick');
-    void countdown.offsetWidth; // force reflow to restart animation
-    countdown.classList.add('tick');
+    if (!prefersReducedMotion.matches) {
+      countdown.classList.remove('tick');
+      void countdown.offsetWidth; // force reflow to restart animation
+      countdown.classList.add('tick');
+    }
     updateRing(timeRemaining, totalTime);
   }
 
@@ -1191,11 +1213,13 @@
       return;
     }
 
-    // Always update the ring smoothly using fractional progress
+    // Update the ring — smooth sub-second interpolation unless reduced motion is preferred
     var remaining = Math.max(0, phaseDuration - elapsed);
-    var pct    = phaseDuration > 0 ? remaining / phaseDuration : 0;
-    var offset = CIRCUMFERENCE * (1 - pct);
-    ringProgress.style.strokeDashoffset = offset;
+    if (!prefersReducedMotion.matches) {
+      var pct    = phaseDuration > 0 ? remaining / phaseDuration : 0;
+      var offset = CIRCUMFERENCE * (1 - pct);
+      ringProgress.style.strokeDashoffset = offset;
+    }
 
     // Update countdown number only when the whole-second value changes
     if (display !== lastDisplaySec) {
@@ -1203,9 +1227,11 @@
       timeRemaining  = display;
       countdownDisplay.textContent = display;
       countdown.setAttribute('aria-label', display + ' seconds');
-      countdown.classList.remove('tick');
-      void countdown.offsetWidth;
-      countdown.classList.add('tick');
+      if (!prefersReducedMotion.matches) {
+        countdown.classList.remove('tick');
+        void countdown.offsetWidth;
+        countdown.classList.add('tick');
+      }
 
       // Tick tones on last 3 seconds (and all of get_ready)
       if (display > 0 && (state === 'get_ready' || display <= 3)) {
@@ -1645,7 +1671,10 @@
     const isDone = appWrapper.classList.contains('done-state');
     if (isDone && !wasDone) {
       wasDone = true;
-      celebrate();
+      // Skip particles if user prefers reduced motion
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        celebrate();
+      }
     }
     if (!isDone) wasDone = false;
   });
