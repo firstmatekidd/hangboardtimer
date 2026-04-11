@@ -1,5 +1,9 @@
 ## TODO
 * Add a fanfare particle explosion when the done state is reached.
+* Timer text in the timer ring just reads out as the number. Change so that it will read out as number of seconds.
+* "Hang seconds" and other labels read out as two elements and should be combined for screen readers
+* Help section reads out to screen reader as an empty section when it is collapsed.
+* Recommended gear region is a whole link and probably doesn't need to be. Screen reader doesn't access the content inside of it and should.
 
 
 ## DONE
