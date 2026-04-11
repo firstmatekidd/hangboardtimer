@@ -1,0 +1,317 @@
+
+<style>
+  .mock-root {
+    background: #0f0f0f;
+    border-radius: 12px;
+    padding: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    color: #f0ede8;
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  .mock-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    min-height: 320px;
+  }
+  .left-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-right: 1px solid #2a2a2a;
+    padding-right: 10px;
+  }
+  .right-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-left: 4px;
+    padding-bottom: 10px;
+  }
+  .ring-wrap {
+    position: relative;
+    width: 160px;
+    height: 160px;
+  }
+  .ring-wrap svg { display: block; }
+  .ring-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .countdown-num {
+    font-size: 52px;
+    font-weight: 700;
+    line-height: 1;
+    color: #f0ede8;
+  }
+  .state-label {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: #e8621a;
+  }
+  .hang-counter {
+    font-size: 13px;
+    color: #888;
+    letter-spacing: 0.04em;
+  }
+  .btn-row {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  .btn-primary {
+    flex: 2;
+    background: #e8621a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 12px 0;
+    letter-spacing: 0.04em;
+    cursor: default;
+  }
+  .btn-secondary {
+    flex: 1;
+    background: #2a2a2a;
+    color: #f0ede8;
+    border: 1px solid #555;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 12px 0;
+    cursor: default;
+  }
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .setting-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .setting-lbl {
+    font-size: 11px;
+    color: #888;
+    text-align: center;
+    line-height: 1.3;
+  }
+  .setting-input {
+    background: #1e1e1e;
+    border: 1px solid #444;
+    border-radius: 6px;
+    color: #f0ede8;
+    font-size: 20px;
+    font-weight: 700;
+    text-align: center;
+    width: 100%;
+    padding: 8px 0;
+    box-sizing: border-box;
+  }
+  .toggles-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .toggle-group {
+    display: flex;
+    gap: 12px;
+  }
+  .toggle-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: #aaa;
+  }
+  .mock-checkbox {
+    width: 14px; height: 14px;
+    border: 1px solid #666;
+    border-radius: 3px;
+    background: #1e1e1e;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .mock-checkbox.checked {
+    background: #e8621a;
+    border-color: #e8621a;
+  }
+  .mock-checkbox.checked::after {
+    content: '';
+    display: block;
+    width: 8px; height: 5px;
+    border-left: 1.5px solid #fff;
+    border-bottom: 1.5px solid #fff;
+    transform: rotate(-45deg) translateY(-1px);
+  }
+  .help-btn {
+    background: #2a2a2a;
+    color: #f0ede8;
+    border: 1px solid #555;
+    border-radius: 6px;
+    font-size: 12px;
+    padding: 5px 12px;
+    cursor: default;
+  }
+  .section-divider {
+    border: none;
+    border-top: 1px solid #222;
+    margin: 2px 0;
+  }
+  .settings-heading {
+    font-size: 11px;
+    color: #777;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .affiliate-card {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .affiliate-icon {
+    width: 36px; height: 36px;
+    background: #252525;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .affiliate-text { font-size: 12px; color: #bbb; line-height: 1.4; }
+  .affiliate-link { color: #4a7fa5; font-size: 12px; }
+  .ad-bar {
+    background: #141414;
+    border: 1px dashed #2e2e2e;
+    border-radius: 6px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #444;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+  .app-header {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    color: #555;
+    text-align: center;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+</style>
+
+<div style="padding: 1rem 0;">
+  <div class="mock-root">
+    <div class="app-header">Hangboard Timer — landscape</div>
+
+    <div class="mock-grid">
+
+      <div class="left-col">
+        <div class="ring-wrap">
+          <svg width="160" height="160" viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r="68" fill="none" stroke="#222" stroke-width="10"/>
+            <circle cx="80" cy="80" r="68" fill="none" stroke="#e8621a" stroke-width="10"
+              stroke-dasharray="427" stroke-dashoffset="107"
+              stroke-linecap="round"
+              transform="rotate(-90 80 80)"/>
+          </svg>
+          <div class="ring-center">
+            <div class="countdown-num">7</div>
+          </div>
+        </div>
+        <div class="state-label">HANG</div>
+        <div class="hang-counter">Hang 2 of 5</div>
+      </div>
+
+      <div class="right-col">
+
+        <div class="btn-row">
+          <button class="btn-primary">PAUSE</button>
+          <button class="btn-secondary">Reset</button>
+        </div>
+
+        <hr class="section-divider">
+        <div class="settings-heading">Settings</div>
+
+        <div class="settings-grid">
+          <div class="setting-item">
+            <div class="setting-lbl">Hang<br>seconds</div>
+            <div class="setting-input">10</div>
+          </div>
+          <div class="setting-item">
+            <div class="setting-lbl">Rest<br>seconds</div>
+            <div class="setting-input">30</div>
+          </div>
+          <div class="setting-item">
+            <div class="setting-lbl">Repeats<br>count</div>
+            <div class="setting-input">5</div>
+          </div>
+        </div>
+
+        <div class="toggles-row">
+          <div class="toggle-group">
+            <div class="toggle-item">
+              <div class="mock-checkbox checked"></div>
+              <span>Sounds</span>
+            </div>
+            <div class="toggle-item">
+              <div class="mock-checkbox checked"></div>
+              <span>Haptics</span>
+            </div>
+          </div>
+          <button class="help-btn">? Help</button>
+        </div>
+
+        <hr class="section-divider">
+
+        <div class="affiliate-card">
+          <div class="affiliate-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.5">
+              <rect x="3" y="8" width="18" height="10" rx="2"/>
+              <line x1="7" y1="8" x2="7" y2="18"/>
+              <line x1="12" y1="8" x2="12" y2="18"/>
+              <line x1="17" y1="8" x2="17" y2="18"/>
+              <rect x="6" y="4" width="12" height="4" rx="1"/>
+            </svg>
+          </div>
+          <div>
+            <div class="affiliate-text">Train on the same board I use</div>
+            <div class="affiliate-link">View on Amazon →</div>
+          </div>
+        </div>
+
+        <div style="font-size: 10px; color: #444; text-align: center; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px;">Advertisement</div>
+        <div class="ad-bar">ad banner · fixed to viewport bottom</div>
+
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 14px; display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: var(--color-text-secondary);">
+    <div>① Pause uses the orange accent fill — highest visual priority during a session.</div>
+    <div>② Reset and Help use <code>#2a2a2a</code> fill with a <code>#555</code> border — clearly visible on the dark background without competing with Pause.</div>
+    <div>③ Settings inputs use <code>#1e1e1e</code> fill with a <code>#444</code> border to read as editable fields.</div>
+  </div>
+</div>

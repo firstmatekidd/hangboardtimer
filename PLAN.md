@@ -60,10 +60,10 @@ Section headings use a `.visually-hidden` CSS class (positioned off-screen, not 
 ### 1. Timer Display (`#timer-display`)
 - Large SVG circle as a progress ring using `stroke-dasharray` / `stroke-dashoffset`. SVG ring marked `aria-hidden="true"` since it is decorative — screen readers use the text countdown instead.
 - A visible text countdown (`<div role="timer" aria-live="off">`) displayed prominently below (or centered over) the ring, sized with `clamp()` / `vw` units. Both the ring and text count down in sync — the ring is a visual reinforcement, not a replacement.
-- A separate visually-hidden `<div aria-live="polite" aria-atomic="true">` used exclusively for state-transition announcements (e.g. "Hang — number 2 of 5", "Rest", "Workout complete!"). This fires only on state changes, not every second, to avoid overwhelming screen reader users. The per-second digit countdown is intentionally silent to assistive tech (`aria-live="off"` on the timer element).
+- A separate visually-hidden `<div aria-live="polite" aria-atomic="true">` used exclusively for state-transition announcements (e.g. "Hang — hang 2 of 5", "Rest", "Workout complete!"). This fires only on state changes, not every second, to avoid overwhelming screen reader users. The per-second digit countdown is intentionally silent to assistive tech (`aria-live="off"` on the timer element).
 - State label below: "HANG" (orange) or "REST" (blue).
 
-### 2. Repeat Counter (`#hang-counter`)
+### 2. Hang Counter (`#hang-counter`)
 - Text display: `Hang 2 of 5`
 - Updates after each full hang+rest cycle.
 
@@ -78,7 +78,7 @@ Section headings use a `.visually-hidden` CSS class (positioned off-screen, not 
 - Three labeled number inputs with large tap targets:
   - **Hang** — label reads "Hang / seconds", centered above input, default: 10
   - **Rest** — label reads "Rest / seconds", centered above input, default: 30
-  - **Repeats** — label reads "Repeats / count", centered above input, default: 5. ("Repeats" replaces "Sets" to make clear this is the number of hang/rest cycles that will repeat.)
+  - **Repeats** — label reads "Repeats / count", centered above input, default: 5.
 - Labels use "seconds" in full (not "(s)") to avoid ambiguity between the unit and plurality.
 - Labels are centered above their respective inputs; label text is visibly sized (13px) for readability.
 - Inputs are clearly editable fields — styled with a visible border and background.
@@ -89,14 +89,14 @@ Section headings use a `.visually-hidden` CSS class (positioned off-screen, not 
   - Hang/Rest time changes: applied at the start of the next phase (not mid-phase, to avoid jarring jumps). The current phase completes at its original duration.
   - Repeats change: applied immediately — if the user lowers the repeat count below `currentHang`, the session ends at the current hang's completion.
 - **Focus indicators**: Settings inputs and checkboxes use a white `outline` with 2px offset (`outline: 2px solid #fff; outline-offset: 2px`) so the ring sits visibly clear of the control edge.
-- **Toggles row**: The "Sounds" checkbox, "Vibration" checkbox, and the "? Help" disclosure button sit on the same row. Sounds and Vibration checkboxes are grouped on the left; Help button on the right.
-- **Sound toggle**: A semantic `<input type="checkbox">` paired with a `<label>`, labeled "Sounds". Checked by default. When unchecked, all Web Audio API tones are suppressed. Default is to be toggled on.
-- **Haptic toggle**: A semantic `<input type="checkbox">` paired with a `<label>`, labeled "Vibration". Checked by default. When unchecked, all `navigator.vibrate()` calls are suppressed. Default is to be toggled off.
+- **Toggles row**: The "Enable sounds" checkbox, "Enable haptics" checkbox, and the "? Help" disclosure button sit on the same row. Sounds and haptics checkboxes are grouped on the left; Help button on the right.
+- **Sound toggle**: A semantic `<input type="checkbox">` paired with a `<label>`, labeled "Enable sounds". Checked by default. When unchecked, all Web Audio API tones are suppressed.
+- **Haptic toggle**: A semantic `<input type="checkbox">` paired with a `<label>`, labeled "Enable haptics". Checked by default. When unchecked, all `navigator.vibrate()` calls are suppressed.
 - **Persistence**: All settings saved to `localStorage` on change: `hbt_hangTime`, `hbt_restTime`, `hbt_repeats`, `hbt_soundEnabled`, `hbt_hapticEnabled`. Loaded on page load with fallback to defaults.
 
 ### 5. Help Disclosure (`#help-disclosure`)
 - A `<button>` labeled "? Help" that toggles an inline `<div>` panel — no popup, no modal.
-- Positioned on the same row as the "Sounds" checkbox, aligned to the right, so both sit at the bottom of the settings section.
+- Positioned on the same row as the "Enable sounds" checkbox, aligned to the right, so both sit at the bottom of the settings section.
 - Implemented with `aria-expanded` on the button and `aria-controls` pointing to the panel `id`.
 - Panel uses `hidden` attribute (not `display:none` via CSS) so assistive technologies respect the collapsed state correctly.
 - Panel expands directly below the settings section, above the affiliate card.
@@ -108,7 +108,12 @@ Section headings use a `.visually-hidden` CSS class (positioned off-screen, not 
   - **Hang tone**: high-pitched short beep (~880 Hz, 150ms) — signals start of hang.
   - **Rest tone**: lower, longer tone (~440 Hz, 300ms) — signals start of rest.
   - **Done tone**: a short descending two-note chime (~660 Hz then ~440 Hz, ~200ms each) — signals workout complete. Distinct from the hang/rest tones so users know the session has ended.
-- Tick logic: on every tick, if `timeRemaining <= 3` AND current state is `get_ready`, `hanging`, or `resting`, play the tick tone instead of (or in addition to) any transition tone.
+- Tick logic: ticks are played during the final 3 seconds of every phase. The rules are:
+  - During `get_ready`: play a tick on each of the 3 seconds (all three seconds are tick seconds).
+  - During `hanging`: play a tick on each of the last 3 seconds (i.e. when `timeRemaining` is 3, 2, or 1). The hang→rest transition tone fires immediately after the final tick at `timeRemaining = 0`. This means there is always a guaranteed 3-tick lead-in before the rest tone, regardless of drift.
+  - During `resting`: play a tick on each of the last 3 seconds. The rest→hang transition tone fires immediately after the final tick at `timeRemaining = 0`, giving a 3-tick lead-in before the next hang tone.
+  - Ticks and transition tones do not overlap: the transition tone replaces rather than stacks on the final tick moment (`timeRemaining = 0`).
+  - If a phase is 3 seconds or shorter, every second is a tick second; the transition tone still fires at `timeRemaining = 0`.
 - Sounds triggered on each state transition.
 - Audio context initialized on first user interaction (to comply with autoplay policy).
 - **Haptic feedback**: `navigator.vibrate()` called alongside each audio cue as a fallback for silent-mode users:
@@ -118,7 +123,7 @@ Section headings use a `.visually-hidden` CSS class (positioned off-screen, not 
   - Done tone: long-short-long pattern (200ms on, 80ms off, 100ms on).
   - Haptics are suppressed when the haptic toggle is off.
   - `navigator.vibrate` is not supported on iOS — this is a known limitation; no workaround exists in the browser. The app degrades silently (no error shown).
-- **Haptic toggle**: A semantic `<input type="checkbox">` paired with a `<label>`, labeled "Vibration". Checked by default. Saved to `localStorage` under key `hbt_hapticEnabled`.
+- **Haptic toggle**: A semantic `<input type="checkbox">` paired with a `<label>`, labeled "Enable haptics". Checked by default. Saved to `localStorage` under key `hbt_hapticEnabled`.
 
 ### 7. Affiliate Link (`#affiliate`)
 - A styled card with:
@@ -128,8 +133,11 @@ Section headings use a `.visually-hidden` CSS class (positioned off-screen, not 
   - `rel="noopener sponsored"` on the link.
 
 ### 8. Ad Section (`#ad-section`)
-- A clearly demarcated banner at the bottom.
-- Placeholder text: "Advertisement" with a fixed-height container (e.g. 90px) ready to accept a Google AdSense script or image ad.
+- Absolutely positioned (`position: fixed; bottom: 0; left: 0; right: 0`) so the ad banner is always visible at the very bottom of the viewport regardless of scroll position.
+- Fixed height (90px). Background matches the near-black palette so it blends with the app chrome.
+- `z-index` high enough to sit above all scrollable content.
+- `#app-wrapper` must have `padding-bottom` equal to the ad height plus a comfortable margin (e.g. 90px + 16px = 106px total) so the last piece of scrollable content (the affiliate card) is never permanently obscured by the fixed banner.
+- In landscape mode the fixed ad bar remains at the bottom of the viewport spanning full width (not confined to the right column); the right column gets the same `padding-bottom` increase to keep the affiliate card clear of it.
 
 ---
 
@@ -161,19 +169,21 @@ Variables:
   - currentState: 'idle' | 'get_ready' | 'hanging' | 'resting' | 'done'
   - currentHang: number
   - timeRemaining: number (seconds)
-  - intervalId: reference to hangInterval
+  - intervalId: reference to setInterval
   - phaseStartTime: number (Date.now() snapshot taken at each state transition)
   - phaseDuration: number (total seconds for the current phase)
 
-On each tick (1s):
-  - Compute timeRemaining from wall clock: Math.ceil(phaseDuration - (Date.now() - phaseStartTime) / 1000)
-    — do NOT decrement a counter; derive from elapsed time to prevent drift over long sessions.
-  - Update countdown display
-  - Update SVG ring offset
-  - If timeRemaining <= 0: transition state
+On each tick (100ms interval — not 1s):
+  - Compute timeRemaining from wall clock: `Math.ceil(phaseDuration - (Date.now() - phaseStartTime) / 1000)`
+    — derived from elapsed time, never decremented, so drift cannot cause a skipped display second.
+  - Using a 100ms interval means the displayed digit updates within ≤100ms of the true second boundary, eliminating the risk of a visible number being skipped due to a delayed 1s callback.
+  - Only re-render the countdown display and ring when the computed whole-second value has changed from the last render (avoid unnecessary DOM thrash on the nine no-op ticks per second).
+  - Check tick/transition sound triggers on whole-second boundaries (compare last rendered second to current).
+  - If timeRemaining <= 0: transition state.
 
-Note: hangInterval alone drifts. Always recompute remaining time from Date.now() rather than
-decrementing a variable, so a 5-hang session with long rests stays accurate to wall-clock time.
+Note: setInterval alone drifts. Always recompute remaining time from Date.now() rather than
+decrementing a variable. The 100ms cadence ensures no display second is ever skipped even under
+heavy CPU load or throttled timers (e.g. backgrounded tabs, though WakeLock should prevent this).
 ```
 
 ---
@@ -194,7 +204,7 @@ decrementing a variable, so a 5-hang session with long rests stays accurate to w
 ## Accessibility Checklist
 
 - [ ] `role="timer"` and `aria-live="off"` on the text countdown element (per-second digits are silent to AT).
-- [ ] Separate visually-hidden `aria-live="polite"` region for state-transition announcements only ("Get ready", "Hang — repeat X of Y", "Rest", "Workout complete!").
+- [ ] Separate visually-hidden `aria-live="polite"` region for state-transition announcements only ("Get ready", "Hang — hang X of Y", "Rest", "Workout complete!").
 - [ ] SVG progress ring has `aria-hidden="true"` (decorative — screen readers use text countdown).
 - [ ] All interactive elements are semantic `<button>` or `<input>` elements.
 - [ ] Sound toggle uses `<input type="checkbox">` with an associated `<label>`.
@@ -218,13 +228,15 @@ decrementing a variable, so a 5-hang session with long rests stays accurate to w
 - Layout stacks vertically on mobile (default, portrait).
 - Settings inputs displayed in a 3-column grid on wider screens.
 - Timer ring scales with `vw` units for visibility across screen sizes.
-- Bottom sections (affiliate + ad) are full-width, comfortable thumb-tap targets.
+- Bottom sections (affiliate + ad) are full-width in portrait; in landscape they move to the bottom of the right-hand column (see Landscape Mode below).
+- Ad banner is fixed to the bottom of the viewport in all orientations; scrollable content has sufficient `padding-bottom` to remain fully accessible above it.
 
 ### Landscape Mode
 - Triggered via `@media (orientation: landscape) and (max-height: 500px)` to target phones in landscape specifically (not wide desktop windows).
-- Layout switches to a two-column grid: timer ring + state label on the left, controls + settings on the right.
+- Layout switches to a two-column grid: timer ring + state label + hang counter on the left; controls + settings + affiliate card + ad spacer on the right.
 - Timer ring shrinks to fit the reduced viewport height (e.g. `width: min(42vh, 42vh)`).
-- Affiliate and ad sections are hidden in landscape to keep the workout UI uncluttered; they reappear in portrait.
+- The affiliate card and ad spacer remain visible — they are placed at the bottom of the right-hand column below the settings, so the right column scrolls independently if needed.
+- The fixed ad banner continues to span the full viewport width at the bottom in landscape, as in portrait. The right column's `padding-bottom` accounts for the ad banner height so the affiliate card is never obscured.
 - Font sizes re-clamped for the reduced height (e.g. countdown uses `clamp(2rem, 10vh, 5rem)`).
 
 ### WakeLock
