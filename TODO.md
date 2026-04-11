@@ -1,8 +1,8 @@
 ## TODO
-* Eliminate the pause at zero. The transition sound is playing too late.
 * iOS voiceover isn't reading out the seconds. Combine all the elements inside the timer for the screen reader to read out the number of seconds and the status.
 
 ## DONE
+* Eliminate the pause at zero. The transition sound is playing too late.
 * Reduce letter spacing on the state display. "Get Ready" is a bit too wide.
 * Bolded words in the help section break up the flow of text for screen readers.
 * H1 is read out as three separate words
