@@ -1,12 +1,12 @@
 ## TODO
 * Add a fanfare particle explosion when the done state is reached.
-* Timer text in the timer ring just reads out as the number. Change so that it will read out as number of seconds.
-* "Hang seconds" and other labels read out as two elements and should be combined for screen readers
-* Help section reads out to screen reader as an empty section when it is collapsed.
-* Recommended gear region is a whole link and probably doesn't need to be. Screen reader doesn't access the content inside of it and should.
 
 
 ## DONE
+* Recommended gear region is a whole link and probably doesn't need to be. Screen reader doesn't access the content inside of it and should.
+* Help section reads out to screen reader as an empty section when it is collapsed.
+* "Hang seconds" and other labels read out as two elements and should be combined for screen readers
+* Timer text in the timer ring just reads out as the number. Change so that it will read out as number of seconds.
 * Ad banner at the bottom is not adhering to the fixed positioning requirement
 * The timer never goes to 0 and the ring doesn't completely drain. Handle the edge case so that it goes completely to 0 and then resets to the next state, even if that means we don't see the ring completely full.
 * Use the wakeLock API to keep the screen from going to sleep while the app is in any states that are counting down.
