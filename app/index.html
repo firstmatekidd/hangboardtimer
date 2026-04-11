@@ -52,19 +52,6 @@
     align-items: center;
   }
 
-  /* ── Visually hidden utility ── */
-  .visually-hidden {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0,0,0,0);
-    white-space: nowrap;
-    border: 0;
-  }
-
   /* ── App wrapper ── */
   #app-wrapper {
     width: 100%;
@@ -696,14 +683,9 @@
   </header>
   <main>
     <!-- Timer Section -->
-    <section id="timer-section" aria-label="Timer">
-      <div id="timer-ring-wrap">
-        <!--
-          Decorative SVG ring — aria-hidden so screen readers ignore it.
-          The #countdown div with role="timer" is the authoritative source.
-          FIX: stroke-dashoffset starts at full circumference = visually empty ring.
-        -->
-        <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+    <section id="timer-section" aria-label="Ready. 10 second hang, 30 second rest, 5 sets." aria-live="polite" aria-atomic="true">
+      <div id="timer-ring-wrap" aria-hidden="true">
+        <svg viewBox="0 0 100 100" focusable="false">
           <circle class="ring-track" cx="50" cy="50" r="44"/>
           <circle id="ring-progress" cx="50" cy="50" r="44"
             stroke-dasharray="276.46"
@@ -711,25 +693,12 @@
         </svg>
 
         <div id="timer-center">
-          <!--
-            FIX: aria-live="off" — announcing every second tick is severely
-            disruptive for screen reader users. State transitions are announced
-            via the dedicated #sr-announce live region instead.
-          -->
-          <div id="countdown" role="timer" aria-live="off" aria-label="Ready"><span id="countdown-display" aria-hidden="true">--</span></div>
-          <!-- Visual-only label; ATs use #sr-announce for state changes -->
+          <div id="countdown"><span id="countdown-display">--</span></div>
           <div id="state-label">READY</div>
         </div>
       </div>
 
-      <div id="set-counter" aria-live="polite" aria-atomic="true">Set — of —</div>
-
-      <!--
-        FIX: dedicated assertive live region — only fires on meaningful transitions
-        (hang start, rest start, pause, resume, done) not on every tick.
-        Visually hidden so it doesn't appear in the layout.
-      -->
-      <div id="sr-announce" aria-live="assertive" aria-atomic="true" class="visually-hidden"></div>
+      <div id="set-counter" aria-hidden="true">Set — of —</div>
     </section>
 
     <!-- Controls Section -->
@@ -874,13 +843,13 @@
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   /* ── DOM refs ── */
-  const wrapper      = document.getElementById('app-wrapper');
+  const wrapper          = document.getElementById('app-wrapper');
+  const timerSection     = document.getElementById('timer-section');
   const countdown        = document.getElementById('countdown');
   const countdownDisplay = document.getElementById('countdown-display');
-  const stateLabel   = document.getElementById('state-label');
-  const setCounter   = document.getElementById('set-counter');
-  const srAnnounce   = document.getElementById('sr-announce');
-  const ringProgress = document.getElementById('ring-progress');
+  const stateLabel       = document.getElementById('state-label');
+  const setCounter       = document.getElementById('set-counter');
+  const ringProgress     = document.getElementById('ring-progress');
   const btnStart     = document.getElementById('btn-start');
   const btnReset     = document.getElementById('btn-reset');
   const inputHang    = document.getElementById('input-hang');
@@ -929,15 +898,6 @@
     const val = parseInt(input.value, 10);
     if (isNaN(val) || val < 1) input.value = 1;
     saveSettings();
-  }
-
-  /* ── Screen-reader announcements ──
-     FIX: Only fires on meaningful state transitions — not every tick.
-     We clear and reset in a rAF so the same string re-triggers the live region.
-  */
-  function announce(msg) {
-    srAnnounce.textContent = '';
-    requestAnimationFrame(() => { srAnnounce.textContent = msg; });
   }
 
   /* ── Wake Lock ── */
@@ -1035,7 +995,7 @@
   /* ── Display (called every tick) ── */
   function updateDisplay() {
     countdownDisplay.textContent = timeRemaining;
-    countdown.setAttribute('aria-label', timeRemaining + ' seconds');
+    timerSection.setAttribute('aria-label', stateLabel.textContent + '. ' + timeRemaining + ' seconds. ' + setCounter.textContent + '.');
     if (!prefersReducedMotion.matches) {
       countdown.classList.remove('tick');
       void countdown.offsetWidth; // force reflow to restart animation
@@ -1080,11 +1040,10 @@
     setWrapperState('get_ready');
     stateLabel.textContent = 'GET READY';
     countdownDisplay.textContent = 3;
-    countdown.setAttribute('aria-label', '3 seconds');
     updateRingDeferred(3, 3);
     updateSetCounter();
+    timerSection.setAttribute('aria-label', 'Get ready. ' + totalSets + ' set' + (totalSets !== 1 ? 's' : '') + '.');
     playTickTone();
-    announce('Get ready.');
   }
 
   /* ── Transition: HANGING ── */
@@ -1100,11 +1059,10 @@
     setWrapperState('hanging');
     stateLabel.textContent = 'HANG';
     countdownDisplay.textContent = hangSecs;
-    countdown.setAttribute('aria-label', hangSecs + ' seconds');
     updateRingDeferred(hangSecs, hangSecs);
     updateSetCounter();
+    timerSection.setAttribute('aria-label', 'Hang. Set ' + currentSet + ' of ' + totalSets + '. ' + hangSecs + ' seconds.');
     playHangTone();
-    announce('Hang. Set ' + currentSet + ' of ' + totalSets + '. ' + hangSecs + ' seconds.');
   }
 
   /* ── Transition: RESTING ── */
@@ -1120,12 +1078,11 @@
     setWrapperState('resting');
     stateLabel.textContent = 'REST';
     countdownDisplay.textContent = restSecs;
-    countdown.setAttribute('aria-label', restSecs + ' seconds');
     updateRingDeferred(restSecs, restSecs);
     updateSetCounter();
-    playRestTone();
     var setsLeft = totalSets - currentSet;
-    announce('Rest. ' + restSecs + ' seconds. ' + setsLeft + ' set' + (setsLeft !== 1 ? 's' : '') + ' remaining.');
+    timerSection.setAttribute('aria-label', 'Rest. ' + restSecs + ' seconds. ' + setsLeft + ' set' + (setsLeft !== 1 ? 's' : '') + ' remaining.');
+    playRestTone();
   }
 
   /* ── Transition: DONE ── */
@@ -1138,14 +1095,13 @@
     // FIX: ring shows full (offset=0) to signal complete
     ringProgress.style.strokeDashoffset = 0;
     countdownDisplay.textContent = '\u2713'; // ✓
-    countdown.setAttribute('aria-label', 'Done');
     countdown.classList.remove('tick');
     stateLabel.textContent = 'DONE';
     setCounter.textContent = totalSets + ' set' + (totalSets !== 1 ? 's' : '') + ' complete';
     btnStart.textContent = 'RESTART';
     btnStart.setAttribute('aria-label', 'Restart workout');
+    timerSection.setAttribute('aria-label', 'Workout complete. ' + totalSets + ' set' + (totalSets !== 1 ? 's' : '') + ' finished.');
     playDoneTone();
-    announce('Workout complete! ' + totalSets + ' set' + (totalSets !== 1 ? 's' : '') + ' finished. Well done.');
   }
 
   /* ── Tick (every 40 ms — wall-clock based, drift-free) ── */
@@ -1177,7 +1133,7 @@
       lastDisplaySec = display;
       timeRemaining  = display;
       countdownDisplay.textContent = display;
-      countdown.setAttribute('aria-label', display + ' seconds');
+      timerSection.setAttribute('aria-label', stateLabel.textContent + '. ' + display + ' seconds. ' + setCounter.textContent + '.');
       if (!prefersReducedMotion.matches) {
         countdown.classList.remove('tick');
         void countdown.offsetWidth;
@@ -1252,7 +1208,7 @@
       setWrapperState('paused_get_ready');
       btnStart.textContent = 'RESUME';
       btnStart.setAttribute('aria-label', 'Resume timer');
-      announce('Timer paused.');
+      timerSection.setAttribute('aria-label', 'Paused. Get ready. ' + timeRemaining + ' seconds.');
 
     } else if (state === 'hanging' || state === 'resting') {
       // ── Pause ──
@@ -1264,7 +1220,7 @@
       setWrapperState(state); // preserve colour class
       btnStart.textContent = 'RESUME';
       btnStart.setAttribute('aria-label', 'Resume timer');
-      announce('Timer paused.');
+      timerSection.setAttribute('aria-label', 'Paused. ' + stateLabel.textContent + '. ' + timeRemaining + ' seconds. ' + setCounter.textContent + '.');
 
     } else if (state === 'paused_get_ready' || state === 'paused_hang' || state === 'paused_rest') {
       // ── Resume ──
@@ -1272,7 +1228,7 @@
       setWrapperState(state);
       btnStart.textContent = 'PAUSE';
       btnStart.setAttribute('aria-label', 'Pause timer');
-      announce('Timer resumed.');
+      timerSection.setAttribute('aria-label', stateLabel.textContent + '. ' + timeRemaining + ' seconds. ' + setCounter.textContent + '.');
       // Rebase phaseStartTime using exact ms elapsed at pause — no fractional jump
       phaseStartTime = Date.now() - pausedElapsedMs;
       intervalId = setInterval(tick, 40);
@@ -1283,8 +1239,10 @@
   /* ── Idle display — show hang time + full ring ── */
   function showIdleDisplay() {
     var hangSecs = Math.max(1, parseInt(inputHang.value, 10) || 1);
+    var restSecs = Math.max(1, parseInt(inputRest.value, 10) || 1);
+    var sets     = Math.max(1, parseInt(inputSets.value,  10) || 1);
     countdownDisplay.textContent = hangSecs;
-    countdown.setAttribute('aria-label', hangSecs + ' seconds');
+    timerSection.setAttribute('aria-label', 'Ready. ' + hangSecs + ' second hang, ' + restSecs + ' second rest, ' + sets + ' sets.');
     countdown.classList.remove('tick');
     ringProgress.style.transition = 'none';
     ringProgress.style.strokeDashoffset = 0; // full ring
@@ -1308,7 +1266,6 @@
     btnStart.textContent = 'START';
     btnStart.setAttribute('aria-label', 'Start timer');
     showIdleDisplay();
-    announce('Timer reset.');
   }
 
   /* ── Help disclosure ── */
@@ -1353,6 +1310,7 @@
 
   // Apply rest time change immediately if currently resting
   inputRest.addEventListener('change', function() {
+    if (state === 'idle') { showIdleDisplay(); return; }
     if (state !== 'resting' && state !== 'paused_rest') return;
     var newSecs  = Math.max(1, parseInt(inputRest.value, 10) || 1);
     var elapsed  = totalTime - timeRemaining;
@@ -1366,7 +1324,8 @@
 
   // Apply sets change immediately during a session
   inputSets.addEventListener('change', function() {
-    if (state === 'idle' || state === 'done') return;
+    if (state === 'idle') { showIdleDisplay(); return; }
+    if (state === 'done') return;
     var newTotal = Math.max(1, parseInt(inputSets.value, 10) || 1);
     totalSets = newTotal;
     // If current set is now beyond the new total, finish at end of current phase
