@@ -194,6 +194,9 @@
   }
 
   /* ── State color transitions ── */
+  #app-wrapper.get-ready-state #ring-progress { stroke: var(--text-muted); }
+  #app-wrapper.get-ready-state #state-label   { color: var(--text-muted); }
+
   #app-wrapper.hang-state #ring-progress { stroke: var(--accent-hang); }
   #app-wrapper.hang-state #state-label   { color: var(--accent-hang); }
   #app-wrapper.hang-state #btn-start     { background-color: var(--accent-hang); }
@@ -733,8 +736,9 @@
   const CIRCUMFERENCE = 2 * Math.PI * 44; // ≈ 276.46
 
   /* ── State machine ──
-     idle → hanging → resting → hanging → … → done
-     Any active state can pause → paused_hang / paused_rest → resume
+     idle → get_ready (3s) → hanging → resting → hanging → … → done
+     Any active hanging/resting state can pause → paused_hang / paused_rest → resume
+     get_ready cannot be paused
   */
   let state         = 'idle';
   let currentSet    = 0;
@@ -888,7 +892,8 @@
      so colours don't reset to default while paused.
   */
   function setWrapperState(s) {
-    wrapper.classList.remove('hang-state', 'rest-state', 'done-state');
+    wrapper.classList.remove('get-ready-state', 'hang-state', 'rest-state', 'done-state');
+    if (s === 'get_ready')                      wrapper.classList.add('get-ready-state');
     if (s === 'hanging' || s === 'paused_hang') wrapper.classList.add('hang-state');
     if (s === 'resting' || s === 'paused_rest') wrapper.classList.add('rest-state');
     if (s === 'done')                           wrapper.classList.add('done-state');
@@ -897,6 +902,19 @@
   /* ── Settings lock ── */
   function enableSettings(enabled) {
     allInputs.forEach(function(inp) { inp.disabled = !enabled; });
+  }
+
+  /* ── Transition: GET READY ── */
+  function startGetReady() {
+    state         = 'get_ready';
+    timeRemaining = 3;
+    totalTime     = 3;
+    setWrapperState('get_ready');
+    stateLabel.textContent = 'GET READY';
+    updateDisplay();
+    updateSetCounter();
+    playTickTone();
+    announce('Get ready.');
   }
 
   /* ── Transition: HANGING ── */
@@ -953,12 +971,18 @@
 
     if (timeRemaining > 0) {
       updateDisplay();
+      // Play tick tone during get_ready (every second) and last 3s of hang/rest
+      if (state === 'get_ready' || timeRemaining <= 3) {
+        playTickTone();
+      }
       return;
     }
 
     // timeRemaining hit 0 — determine next state
-    if (state === 'hanging') {
-      // FIX: after the last set's hang, finish immediately (no trailing rest)
+    if (state === 'get_ready') {
+      startHang();
+    } else if (state === 'hanging') {
+      // after the last set's hang, finish immediately (no trailing rest)
       if (currentSet >= totalSets) {
         finishWorkout();
       } else {
@@ -987,8 +1011,12 @@
       enableSettings(false);
       btnStart.textContent = 'PAUSE';
       btnStart.setAttribute('aria-label', 'Pause timer');
-      startHang();
+      startGetReady();
       intervalId = setInterval(tick, 1000);
+
+    } else if (state === 'get_ready') {
+      // Cannot pause during get_ready — ignore the press
+      return;
 
     } else if (state === 'hanging' || state === 'resting') {
       // ── Pause ──
@@ -1020,7 +1048,7 @@
     timeRemaining = 0;
     totalTime     = 0;
 
-    wrapper.classList.remove('hang-state', 'rest-state', 'done-state');
+    wrapper.classList.remove('get-ready-state', 'hang-state', 'rest-state', 'done-state');
 
     // FIX: disable transition momentarily so the ring snaps to empty instantly
     ringProgress.style.transition = 'none';

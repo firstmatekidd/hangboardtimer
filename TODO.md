@@ -3,7 +3,6 @@
 * Should be responsive at 320px width so that it doesn't scroll left/right
 * Ad banner at the bottom is not adhering to absolute positioning requirement
 * State display should have a bigger font size
-* No GET_READY state
 * Settings should be editable while paused
 * Reset button should be higher contrast against the background and it's text.
 * Increase font size for state label, start and reset button text
@@ -13,8 +12,10 @@
 * Add a fanfare particle explosion when the done state is reached.
 * Choose a different green color so that it has proper color contrast with the white text
 * Start the ring full and display whatever the current hang time is set to instead of "--" on initial start
+* Improve the visibility of the paused state. When paused, reduce the opacity of the countdown timer area.
 
 ## DONE
 * implement haptics
 * Fonts used have serifs and should be san-serif
 * Change the countdown timer numbering to use the same font as the rest of the app
+* No GET_READY state
