@@ -73,7 +73,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0;
   }
 
   /* ── Header ── */
@@ -273,17 +272,7 @@
     margin-bottom: 12px;
   }
 
-  #settings-section > h2 {
-    font-family: var(--font-display);
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 14px;
-    text-align: center;
-  }
-
+  #settings-section > h2,
   #help-panel > h2 {
     font-family: var(--font-display);
     font-size: 0.68rem;
@@ -367,34 +356,8 @@
     padding-top: 4px;
   }
 
-  .sound-toggle {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    user-select: none;
-  }
-
-  .sound-toggle input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--accent-hang);
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-
-  .sound-toggle input[type="checkbox"]:focus-visible {
-    outline: 2px solid var(--border-focus);
-    outline-offset: 2px;
-  }
-
-  .sound-toggle label {
-    font-family: var(--font-display);
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    cursor: pointer;
-    letter-spacing: 0.02em;
-  }
-
+  /* ── Sound + Haptic toggles ── */
+  .sound-toggle,
   .haptic-toggle {
     display: flex;
     align-items: center;
@@ -402,6 +365,7 @@
     user-select: none;
   }
 
+  .sound-toggle input[type="checkbox"],
   .haptic-toggle input[type="checkbox"] {
     width: 18px;
     height: 18px;
@@ -410,11 +374,13 @@
     flex-shrink: 0;
   }
 
+  .sound-toggle input[type="checkbox"]:focus-visible,
   .haptic-toggle input[type="checkbox"]:focus-visible {
     outline: 2px solid var(--border-focus);
     outline-offset: 2px;
   }
 
+  .sound-toggle label,
   .haptic-toggle label {
     font-family: var(--font-display);
     font-size: 0.8rem;
@@ -485,16 +451,6 @@
   #affiliate-section {
     width: 100%;
     margin-bottom: 20px;
-  }
-
-  #affiliate-section .affiliate-text h2 {
-    font-family: var(--font-display);
-    font-size: 0.62rem;
-    font-weight: 700;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 4px;
   }
 
   #affiliate-card {
@@ -933,7 +889,6 @@
   const chkSound     = document.getElementById('chk-sound');
   const chkHaptic    = document.getElementById('chk-haptic');
   const btnHelp      = document.getElementById('btn-help');
-  const helpPanel    = document.getElementById('help-panel');
   const helpSection  = document.getElementById('help-section');
   const allInputs    = [inputHang, inputRest, inputSets];
 
@@ -1113,9 +1068,6 @@
     if (s === 'done')                               wrapper.classList.add('done-state');
   }
 
-  /* ── Settings lock (no-op — settings remain editable during session) ── */
-  function enableSettings(enabled) { void enabled; /* intentionally unrestricted */ }
-
   /* ── Transition: GET READY ── */
   function startGetReady() {
     state           = 'get_ready';
@@ -1192,7 +1144,6 @@
     setCounter.textContent = totalSets + ' set' + (totalSets !== 1 ? 's' : '') + ' complete';
     btnStart.textContent = 'RESTART';
     btnStart.setAttribute('aria-label', 'Restart workout');
-    enableSettings(true);
     playDoneTone();
     announce('Workout complete! ' + totalSets + ' set' + (totalSets !== 1 ? 's' : '') + ' finished. Well done.');
   }
@@ -1250,9 +1201,9 @@
       }
     }
 
-    // Schedule transition 400ms after showing 0 so user sees it
+    // Option to schedule transition slightly after showing 0 so user sees it
     if (display === 0 && transitionAt === 0) {
-      transitionAt = now + 0;
+      transitionAt = now + 1;
     }
   }
 
@@ -1285,7 +1236,6 @@
       // ── Fresh start or restart after completion ──
       totalSets  = Math.max(1, parseInt(inputSets.value, 10) || 1);
       currentSet = 1;
-      enableSettings(false);
       btnStart.textContent = 'PAUSE';
       btnStart.setAttribute('aria-label', 'Pause timer');
       startGetReady();
@@ -1357,7 +1307,6 @@
     setCounter.textContent = 'Set \u2014 of \u2014';
     btnStart.textContent = 'START';
     btnStart.setAttribute('aria-label', 'Start timer');
-    enableSettings(true);
     showIdleDisplay();
     announce('Timer reset.');
   }
@@ -1526,7 +1475,6 @@
   function makeParticle(ring) {
     // Random angle around the ring
     const baseAngle  = -Math.PI * 0.5; // start from top (ring is rotated -90deg in CSS)
-    const halfSpread = CONFIG.ANGLE_SPREAD * 0.5;
     const angle      = baseAngle + (Math.random() - 0.5) * CONFIG.ANGLE_SPREAD;
 
     // Position on ring circumference + jitter
