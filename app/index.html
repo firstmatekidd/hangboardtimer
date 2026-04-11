@@ -14,7 +14,7 @@
     --surface-2:     #1F1F1F;
     --text:          #f0ede8;
     --text-muted:    #8a857e;
-    --accent-hang:   #e8621a;
+    --accent-hang:   #C44D00;
     --accent-rest:   #3d6e91;
     --accent-done:   #4a9e5c;
     --border:        #2e2e2e;
@@ -738,145 +738,145 @@
   <header>
     <h1>Hang<span>board</span> Timer</h1>
   </header>
-
-  <!-- Timer Section -->
-  <section id="timer-section" aria-label="Timer">
-    <div id="timer-ring-wrap">
-      <!--
-        Decorative SVG ring — aria-hidden so screen readers ignore it.
-        The #countdown div with role="timer" is the authoritative source.
-        FIX: stroke-dashoffset starts at full circumference = visually empty ring.
-      -->
-      <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
-        <circle class="ring-track" cx="50" cy="50" r="44"/>
-        <circle id="ring-progress" cx="50" cy="50" r="44"
-          stroke-dasharray="276.46"
-          stroke-dashoffset="276.46"/>
-      </svg>
-
-      <div id="timer-center">
+  <main>
+    <!-- Timer Section -->
+    <section id="timer-section" aria-label="Timer">
+      <div id="timer-ring-wrap">
         <!--
-          FIX: aria-live="off" — announcing every second tick is severely
-          disruptive for screen reader users. State transitions are announced
-          via the dedicated #sr-announce live region instead.
+          Decorative SVG ring — aria-hidden so screen readers ignore it.
+          The #countdown div with role="timer" is the authoritative source.
+          FIX: stroke-dashoffset starts at full circumference = visually empty ring.
         -->
-        <div id="countdown" role="timer" aria-live="off" aria-label="Ready"><span id="countdown-display" aria-hidden="true">--</span></div>
-        <!-- Visual-only label; ATs use #sr-announce for state changes -->
-        <div id="state-label">READY</div>
-      </div>
-    </div>
+        <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+          <circle class="ring-track" cx="50" cy="50" r="44"/>
+          <circle id="ring-progress" cx="50" cy="50" r="44"
+            stroke-dasharray="276.46"
+            stroke-dashoffset="276.46"/>
+        </svg>
 
-    <div id="set-counter" aria-live="polite" aria-atomic="true">Set — of —</div>
+        <div id="timer-center">
+          <!--
+            FIX: aria-live="off" — announcing every second tick is severely
+            disruptive for screen reader users. State transitions are announced
+            via the dedicated #sr-announce live region instead.
+          -->
+          <div id="countdown" role="timer" aria-live="off" aria-label="Ready"><span id="countdown-display" aria-hidden="true">--</span></div>
+          <!-- Visual-only label; ATs use #sr-announce for state changes -->
+          <div id="state-label">READY</div>
+        </div>
+      </div>
+
+      <div id="set-counter" aria-live="polite" aria-atomic="true">Set — of —</div>
+
+      <!--
+        FIX: dedicated assertive live region — only fires on meaningful transitions
+        (hang start, rest start, pause, resume, done) not on every tick.
+        Visually hidden so it doesn't appear in the layout.
+      -->
+      <div id="sr-announce" aria-live="assertive" aria-atomic="true" class="visually-hidden"></div>
+    </section>
+
+    <!-- Controls Section -->
+    <div id="right-col">
+    <section id="controls-section" aria-label="Controls">
+      <div id="controls">
+        <button id="btn-start" class="btn" aria-label="Start timer">START</button>
+        <button id="btn-reset" class="btn" aria-label="Reset timer">RESET</button>
+      </div>
+    </section>
+
+    <!-- Settings Section -->
+    <section id="settings-section" aria-label="Settings">
+      <h2>Settings</h2>
+      <div id="settings">
+        <div class="settings-row">
+
+          <div class="setting-item">
+            <!--
+              FIX: removed duplicate aria-label attributes — <label for="…"> is the
+              correct and sufficient accessible name. aria-label would override and
+              shadow the visible label text, which is confusing.
+            -->
+            <label for="input-hang">Hang seconds</label>
+            <input type="number" id="input-hang" inputmode="numeric" min="1" value="10">
+          </div>
+
+          <div class="setting-item">
+            <label for="input-rest">Rest seconds</label>
+            <input type="number" id="input-rest" inputmode="numeric" min="1" value="30">
+          </div>
+
+          <div class="setting-item">
+            <label for="input-sets">Sets count</label>
+            <input type="number" id="input-sets" inputmode="numeric" min="1" value="5">
+          </div>
+
+        </div><!-- /.settings-row -->
+
+        <div class="settings-bottom-row">
+          <div style="display:flex;gap:16px;align-items:center;">
+            <div class="sound-toggle">
+              <input type="checkbox" id="chk-sound" checked>
+              <label for="chk-sound">Enable sounds</label>
+            </div>
+            <div class="haptic-toggle">
+              <input type="checkbox" id="chk-haptic">
+              <label for="chk-haptic">Enable vibration</label>
+            </div>
+          </div>
+          <button id="btn-help" aria-expanded="false" aria-controls="help-panel">? Help</button>
+        </div>
+
+      </div>
+    </section>
 
     <!--
-      FIX: dedicated assertive live region — only fires on meaningful transitions
-      (hang start, rest start, pause, resume, done) not on every tick.
-      Visually hidden so it doesn't appear in the layout.
+      FIX: Help is its own <section> per the plan's file structure spec,
+      not embedded inside #settings-section.
+      Uses hidden attribute (not display:none) so ATs respect collapsed state.
     -->
-    <div id="sr-announce" aria-live="assertive" aria-atomic="true" class="visually-hidden"></div>
-  </section>
-
-  <!-- Controls Section -->
-  <div id="right-col">
-  <section id="controls-section" aria-label="Controls">
-    <div id="controls">
-      <button id="btn-start" class="btn" aria-label="Start timer">START</button>
-      <button id="btn-reset" class="btn" aria-label="Reset timer">RESET</button>
-    </div>
-  </section>
-
-  <!-- Settings Section -->
-  <section id="settings-section" aria-label="Settings">
-    <h2>Settings</h2>
-    <div id="settings">
-      <div class="settings-row">
-
-        <div class="setting-item">
-          <!--
-            FIX: removed duplicate aria-label attributes — <label for="…"> is the
-            correct and sufficient accessible name. aria-label would override and
-            shadow the visible label text, which is confusing.
-          -->
-          <label for="input-hang">Hang seconds</label>
-          <input type="number" id="input-hang" inputmode="numeric" min="1" value="10">
-        </div>
-
-        <div class="setting-item">
-          <label for="input-rest">Rest seconds</label>
-          <input type="number" id="input-rest" inputmode="numeric" min="1" value="30">
-        </div>
-
-        <div class="setting-item">
-          <label for="input-sets">Sets count</label>
-          <input type="number" id="input-sets" inputmode="numeric" min="1" value="5">
-        </div>
-
-      </div><!-- /.settings-row -->
-
-      <div class="settings-bottom-row">
-        <div style="display:flex;gap:16px;align-items:center;">
-          <div class="sound-toggle">
-            <input type="checkbox" id="chk-sound" checked>
-            <label for="chk-sound">Enable sounds</label>
-          </div>
-          <div class="haptic-toggle">
-            <input type="checkbox" id="chk-haptic">
-            <label for="chk-haptic">Enable vibration</label>
-          </div>
-        </div>
-        <button id="btn-help" aria-expanded="false" aria-controls="help-panel">? Help</button>
+    <section id="help-section" aria-label="Help" hidden>
+      <div id="help-panel">
+        <h2>Help</h2>
+        <h3>How to use</h3>
+        <p><strong>Set your times:</strong> Enter the number of seconds for each hang, rest period, and how many sets you want to complete.</p>
+        <p><strong>Start training:</strong> Press <strong>START</strong> to begin. The timer counts down your hang, then automatically switches to rest, repeating for the number of sets you configured.</p>
+        <p><strong>Sounds:</strong> A high beep signals the start of a hang; a lower tone signals rest. Disable sounds with the checkbox in Settings if training in a quiet environment.</p>
+        <p><strong>Pause &amp; reset:</strong> <strong>PAUSE</strong> freezes the timer mid-session. <strong>RESET</strong> returns to the beginning without changing your settings.</p>
+        <p><strong>Settings are saved</strong> automatically between visits so you can close and reopen the app without losing your configuration.</p>
       </div>
+    </section>
 
-    </div>
-  </section>
-
-  <!--
-    FIX: Help is its own <section> per the plan's file structure spec,
-    not embedded inside #settings-section.
-    Uses hidden attribute (not display:none) so ATs respect collapsed state.
-  -->
-  <section id="help-section" aria-label="Help" hidden>
-    <div id="help-panel">
-      <h2>Help</h2>
-      <h3>How to use</h3>
-      <p><strong>Set your times:</strong> Enter the number of seconds for each hang, rest period, and how many sets you want to complete.</p>
-      <p><strong>Start training:</strong> Press <strong>START</strong> to begin. The timer counts down your hang, then automatically switches to rest, repeating for the number of sets you configured.</p>
-      <p><strong>Sounds:</strong> A high beep signals the start of a hang; a lower tone signals rest. Disable sounds with the checkbox in Settings if training in a quiet environment.</p>
-      <p><strong>Pause &amp; reset:</strong> <strong>PAUSE</strong> freezes the timer mid-session. <strong>RESET</strong> returns to the beginning without changing your settings.</p>
-      <p><strong>Settings are saved</strong> automatically between visits so you can close and reopen the app without losing your configuration.</p>
-    </div>
-  </section>
-
-  <!-- Affiliate Section -->
-  <section id="affiliate-section" aria-label="Recommended gear">
-    <div id="affiliate-card">
-      <h2>Recommended Gear</h2>
-      <div class="affiliate-card-body">
-        <a class="affiliate-icon-link" href="#" rel="noopener sponsored" target="_blank"
-           aria-label="Metolius Wood Grips hangboard on Amazon — affiliate link, opens in new tab">
-          <div class="affiliate-icon">
-            <svg width="36" height="28" viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <rect x="1" y="5" width="34" height="18" rx="3" stroke="#e8621a" stroke-width="1.8" fill="none"/>
-              <rect x="4" y="8" width="6" height="6" rx="1.5" fill="#e8621a" opacity="0.6"/>
-              <rect x="13" y="8" width="10" height="4" rx="1.5" fill="#e8621a" opacity="0.4"/>
-              <rect x="26" y="8" width="6" height="6" rx="1.5" fill="#e8621a" opacity="0.6"/>
-              <rect x="4" y="16" width="28" height="3" rx="1.5" fill="#e8621a" opacity="0.25"/>
-              <line x1="10" y1="1" x2="10" y2="5" stroke="#e8621a" stroke-width="1.6" stroke-linecap="round"/>
-              <line x1="26" y1="1" x2="26" y2="5" stroke="#e8621a" stroke-width="1.6" stroke-linecap="round"/>
-            </svg>
+    <!-- Affiliate Section -->
+    <section id="affiliate-section" aria-label="Recommended gear">
+      <div id="affiliate-card">
+        <h2>Recommended Gear</h2>
+        <div class="affiliate-card-body">
+          <a class="affiliate-icon-link" href="#" rel="noopener sponsored" target="_blank"
+             aria-label="Metolius Wood Grips hangboard on Amazon — affiliate link, opens in new tab">
+            <div class="affiliate-icon">
+              <svg width="36" height="28" viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="1" y="5" width="34" height="18" rx="3" stroke="#e8621a" stroke-width="1.8" fill="none"/>
+                <rect x="4" y="8" width="6" height="6" rx="1.5" fill="#e8621a" opacity="0.6"/>
+                <rect x="13" y="8" width="10" height="4" rx="1.5" fill="#e8621a" opacity="0.4"/>
+                <rect x="26" y="8" width="6" height="6" rx="1.5" fill="#e8621a" opacity="0.6"/>
+                <rect x="4" y="16" width="28" height="3" rx="1.5" fill="#e8621a" opacity="0.25"/>
+                <line x1="10" y1="1" x2="10" y2="5" stroke="#e8621a" stroke-width="1.6" stroke-linecap="round"/>
+                <line x1="26" y1="1" x2="26" y2="5" stroke="#e8621a" stroke-width="1.6" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </a>
+          <div class="affiliate-text">
+            <p>Train on the same board I use</p>
+            <a href="#" rel="noopener sponsored" target="_blank"
+               aria-label="Shop on Amazon — affiliate link, opens in new tab">Shop on Amazon →</a>
           </div>
-        </a>
-        <div class="affiliate-text">
-          <p>Train on the same board I use</p>
-          <a href="#" rel="noopener sponsored" target="_blank"
-             aria-label="Shop on Amazon — affiliate link, opens in new tab">Shop on Amazon →</a>
         </div>
       </div>
-    </div>
-  </section>
+    </section>
 
-  </div><!-- /#right-col -->
-
+    </div><!-- /#right-col -->
+  </main>
   <!-- Ad Section -->
   <section id="ad-section" aria-label="Advertisement">
     <div id="ad-banner" role="img" aria-label="Advertisement placeholder">
