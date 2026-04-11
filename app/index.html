@@ -137,8 +137,7 @@
     stroke: var(--accent-hang);
     stroke-width: var(--ring-stroke);
     stroke-linecap: round;
-    /* 0.85s so animation finishes cleanly before next tick at 1.0s */
-    transition: stroke-dashoffset 0.85s linear, stroke var(--transition-state);
+    transition: stroke var(--transition-state);
   }
 
   /* ── Timer center content ── */
@@ -826,6 +825,11 @@
   let totalSets     = 5;
   let timeRemaining = 0;
   let totalTime     = 0;
+  let phaseStartTime  = 0;   // Date.now() snapshot at phase start
+  let phaseDuration   = 0;   // total ms for current phase
+  let pausedElapsedMs = 0;   // exact elapsed ms captured at pause
+  let lastDisplaySec  = -1;  // last whole-second value rendered
+  let transitionAt    = 0;   // Date.now() when we should transition (after showing 0)
   let intervalId    = null;
   let audioCtx      = null;
   let wakeLock      = null;
@@ -1013,9 +1017,13 @@
 
   /* ── Transition: GET READY ── */
   function startGetReady() {
-    state         = 'get_ready';
-    timeRemaining = 3;
-    totalTime     = 3;
+    state           = 'get_ready';
+    totalTime       = 3;
+    phaseDuration   = 3000;
+    phaseStartTime  = Date.now();
+    lastDisplaySec  = 3;
+    transitionAt    = 0;
+    timeRemaining   = 3;
     setWrapperState('get_ready');
     stateLabel.textContent = 'GET READY';
     updateDisplay();
@@ -1027,9 +1035,13 @@
   /* ── Transition: HANGING ── */
   function startHang() {
     state = 'hanging';
-    var hangSecs  = Math.max(1, parseInt(inputHang.value, 10) || 1);
-    timeRemaining = hangSecs;
-    totalTime     = hangSecs;
+    var hangSecs    = Math.max(1, parseInt(inputHang.value, 10) || 1);
+    totalTime       = hangSecs;
+    phaseDuration   = hangSecs * 1000;
+    phaseStartTime  = Date.now();
+    lastDisplaySec  = hangSecs;
+    transitionAt    = 0;
+    timeRemaining   = hangSecs;
     setWrapperState('hanging');
     stateLabel.textContent = 'HANG';
     updateDisplay();
@@ -1041,9 +1053,13 @@
   /* ── Transition: RESTING ── */
   function startRest() {
     state = 'resting';
-    var restSecs  = Math.max(1, parseInt(inputRest.value, 10) || 1);
-    timeRemaining = restSecs;
-    totalTime     = restSecs;
+    var restSecs    = Math.max(1, parseInt(inputRest.value, 10) || 1);
+    totalTime       = restSecs;
+    phaseDuration   = restSecs * 1000;
+    phaseStartTime  = Date.now();
+    lastDisplaySec  = restSecs;
+    transitionAt    = 0;
+    timeRemaining   = restSecs;
     setWrapperState('resting');
     stateLabel.textContent = 'REST';
     updateDisplay();
@@ -1073,31 +1089,60 @@
     announce('Workout complete! ' + totalSets + ' set' + (totalSets !== 1 ? 's' : '') + ' finished. Well done.');
   }
 
-  /* ── Tick (every 1 000 ms) ── */
+  /* ── Tick (every 40 ms — wall-clock based, drift-free) ── */
   function tick() {
-    timeRemaining--;
+    var now     = Date.now();
+    var elapsed = now - phaseStartTime;
+    var secs    = Math.ceil((phaseDuration - elapsed) / 1000);
+    var display = Math.max(0, secs);
 
-    if (timeRemaining > 0) {
-      updateDisplay();
-      // Play tick tone during get_ready (every second) and last 3s of hang/rest
-      if (state === 'get_ready' || timeRemaining <= 3) {
-        playTickTone();
+    // If we've already scheduled a transition, wait for it
+    if (transitionAt > 0) {
+      if (now >= transitionAt) {
+        transitionAt = 0;
+        doTransition();
       }
       return;
     }
 
-    // timeRemaining hit 0 — determine next state
+    // Always update the ring smoothly using fractional progress
+    var remaining = Math.max(0, phaseDuration - elapsed);
+    var pct    = phaseDuration > 0 ? remaining / phaseDuration : 0;
+    var offset = CIRCUMFERENCE * (1 - pct);
+    ringProgress.style.strokeDashoffset = offset;
+
+    // Update countdown number only when the whole-second value changes
+    if (display !== lastDisplaySec) {
+      lastDisplaySec = display;
+      timeRemaining  = display;
+      countdown.textContent = display;
+      countdown.classList.remove('tick');
+      void countdown.offsetWidth;
+      countdown.classList.add('tick');
+
+      // Tick tones on last 3 seconds (and all of get_ready)
+      if (display > 0 && (state === 'get_ready' || display <= 3)) {
+        playTickTone();
+      }
+    }
+
+    // Schedule transition 400ms after showing 0 so user sees it
+    if (display === 0 && transitionAt === 0) {
+      transitionAt = now + 400;
+    }
+  }
+
+  /* ── State transition (called after 0 is displayed) ── */
+  function doTransition() {
     if (state === 'get_ready') {
       startHang();
     } else if (state === 'hanging') {
-      // after the last set's hang, finish immediately (no trailing rest)
       if (currentSet >= totalSets) {
         finishWorkout();
       } else {
         startRest();
       }
     } else if (state === 'resting') {
-      // Rest complete — advance set and begin next hang
       currentSet++;
       if (currentSet > totalSets) {
         finishWorkout();
@@ -1120,7 +1165,7 @@
       btnStart.textContent = 'PAUSE';
       btnStart.setAttribute('aria-label', 'Pause timer');
       startGetReady();
-      intervalId = setInterval(tick, 1000);
+      intervalId = setInterval(tick, 40);
       acquireWakeLock();
 
     } else if (state === 'get_ready') {
@@ -1128,6 +1173,7 @@
       clearInterval(intervalId);
       intervalId = null;
       releaseWakeLock();
+      pausedElapsedMs = Date.now() - phaseStartTime;
       state = 'paused_get_ready';
       setWrapperState('paused_get_ready');
       btnStart.textContent = 'RESUME';
@@ -1139,6 +1185,7 @@
       clearInterval(intervalId);
       intervalId = null;
       releaseWakeLock();
+      pausedElapsedMs = Date.now() - phaseStartTime;
       state = (state === 'hanging') ? 'paused_hang' : 'paused_rest';
       setWrapperState(state); // preserve colour class
       btnStart.textContent = 'RESUME';
@@ -1152,7 +1199,9 @@
       btnStart.textContent = 'PAUSE';
       btnStart.setAttribute('aria-label', 'Pause timer');
       announce('Timer resumed.');
-      intervalId = setInterval(tick, 1000);
+      // Rebase phaseStartTime using exact ms elapsed at pause — no fractional jump
+      phaseStartTime = Date.now() - pausedElapsedMs;
+      intervalId = setInterval(tick, 40);
       acquireWakeLock();
     }
   }
@@ -1217,20 +1266,27 @@
   // Apply hang time change immediately if currently hanging
   inputHang.addEventListener('change', function() {
     if (state !== 'hanging' && state !== 'paused_hang') return;
-    var newSecs = Math.max(1, parseInt(inputHang.value, 10) || 1);
-    var elapsed = totalTime - timeRemaining;
-    totalTime = newSecs;
+    var newSecs  = Math.max(1, parseInt(inputHang.value, 10) || 1);
+    var elapsed  = totalTime - timeRemaining;
+    totalTime    = newSecs;
+    phaseDuration = newSecs * 1000;
     timeRemaining = Math.max(0, totalTime - elapsed);
+    // Rebase phaseStartTime so wall-clock matches new remaining time
+    phaseStartTime = Date.now() - (elapsed * 1000);
+    lastDisplaySec = timeRemaining;
     updateDisplay();
   });
 
   // Apply rest time change immediately if currently resting
   inputRest.addEventListener('change', function() {
     if (state !== 'resting' && state !== 'paused_rest') return;
-    var newSecs = Math.max(1, parseInt(inputRest.value, 10) || 1);
-    var elapsed = totalTime - timeRemaining;
-    totalTime = newSecs;
+    var newSecs  = Math.max(1, parseInt(inputRest.value, 10) || 1);
+    var elapsed  = totalTime - timeRemaining;
+    totalTime    = newSecs;
+    phaseDuration = newSecs * 1000;
     timeRemaining = Math.max(0, totalTime - elapsed);
+    phaseStartTime = Date.now() - (elapsed * 1000);
+    lastDisplaySec = timeRemaining;
     updateDisplay();
   });
 
