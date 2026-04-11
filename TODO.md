@@ -1,5 +1,4 @@
-TODO.md
-* Haptics not implemented
+## TODO
 * Landscape not implemented
 * Should be responsive at 320px width so that it doesn't scroll left/right
 * Ad banner at the bottom is not adhering to absolute positioning requirement
@@ -15,3 +14,7 @@ TODO.md
 * Add a fanfare particle explosion when the done state is reached.
 * Choose a different green color so that it has proper color contrast with the white text
 * Change the countdown timer numbering to use the same font as the rest of the app
+* Start the ring full and display whatever the current hang time is set to instead of "--" on initial start
+
+## DONE
+* implement haptics

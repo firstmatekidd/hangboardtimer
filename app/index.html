@@ -381,6 +381,34 @@
     letter-spacing: 0.02em;
   }
 
+  .haptic-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    user-select: none;
+  }
+
+  .haptic-toggle input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-hang);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .haptic-toggle input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+  }
+
+  .haptic-toggle label {
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    letter-spacing: 0.02em;
+  }
+
   /* ── Help section ── */
   #help-section {
     width: 100%;
@@ -622,9 +650,15 @@
       </div><!-- /.settings-row -->
 
       <div class="settings-bottom-row">
-        <div class="sound-toggle">
-          <input type="checkbox" id="chk-sound" checked>
-          <label for="chk-sound">Enable sounds</label>
+        <div style="display:flex;gap:16px;align-items:center;">
+          <div class="sound-toggle">
+            <input type="checkbox" id="chk-sound" checked>
+            <label for="chk-sound">Enable sounds</label>
+          </div>
+          <div class="haptic-toggle">
+            <input type="checkbox" id="chk-haptic">
+            <label for="chk-haptic">Enable haptics</label>
+          </div>
         </div>
         <button id="btn-help" aria-expanded="false" aria-controls="help-panel">? Help</button>
       </div>
@@ -724,16 +758,18 @@
   const inputRest    = document.getElementById('input-rest');
   const inputSets    = document.getElementById('input-sets');
   const chkSound     = document.getElementById('chk-sound');
+  const chkHaptic    = document.getElementById('chk-haptic');
   const btnHelp      = document.getElementById('btn-help');
   const helpPanel    = document.getElementById('help-panel');
   const allInputs    = [inputHang, inputRest, inputSets];
 
   /* ── localStorage persistence ── */
   const KEYS = {
-    hang:  'hbt_hangTime',
-    rest:  'hbt_restTime',
-    sets:  'hbt_sets',
-    sound: 'hbt_soundEnabled',
+    hang:   'hbt_hangTime',
+    rest:   'hbt_restTime',
+    sets:   'hbt_sets',
+    sound:  'hbt_soundEnabled',
+    haptic: 'hbt_hapticEnabled',
   };
 
   function loadSettings() {
@@ -748,6 +784,8 @@
     // The old code used `sound === 'true'` which would also work, but
     // `sound !== 'false'` is safer (defaults to true for any unexpected value).
     if (sound !== null) chkSound.checked = sound !== 'false';
+    const haptic = localStorage.getItem(KEYS.haptic);
+    if (haptic !== null) chkHaptic.checked = haptic === 'true';
   }
 
   function saveSettings() {
@@ -755,6 +793,7 @@
     localStorage.setItem(KEYS.rest,  inputRest.value);
     localStorage.setItem(KEYS.sets,  inputSets.value);
     localStorage.setItem(KEYS.sound, String(chkSound.checked));
+    localStorage.setItem(KEYS.haptic, String(chkHaptic.checked));
   }
 
   function clampInput(input) {
@@ -797,15 +836,24 @@
     } catch (e) { /* silently ignore */ }
   }
 
+  /* ── Haptics ── */
+  function vibrate(pattern) {
+    if (!chkHaptic.checked) return;
+    try { navigator.vibrate(pattern); } catch (e) { /* not supported — degrade silently */ }
+  }
+
   // Hang: ~880 Hz short square wave — sharp and attention-getting
-  function playHangTone() { playTone(880, 0.15, 'square'); }
+  function playHangTone() { playTone(880, 0.15, 'square'); vibrate([80, 40, 80]); }
   // Rest: ~440 Hz longer sine — softer, signals downtime
-  function playRestTone()  { playTone(440, 0.30, 'sine'); }
+  function playRestTone()  { playTone(440, 0.30, 'sine');   vibrate(150); }
+  // Tick: soft click for countdown lead-in
+  function playTickTone()  { playTone(1200, 0.04, 'sine');  vibrate(30); }
   // Done: ascending 3-note fanfare
   function playDoneTone()  {
     playTone(523, 0.15, 'sine');
     setTimeout(function() { playTone(659, 0.15, 'sine'); }, 170);
     setTimeout(function() { playTone(784, 0.35, 'sine'); }, 340);
+    vibrate([200, 80, 100]);
   }
 
   /* ── Ring ──
@@ -1014,6 +1062,7 @@
   });
 
   chkSound.addEventListener('change', saveSettings);
+  chkHaptic.addEventListener('change', saveSettings);
 
   /* ── Initialise ── */
   loadSettings();
