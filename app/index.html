@@ -1129,6 +1129,16 @@
     }
   }
 
+  /* ── Idle display — show hang time + full ring ── */
+  function showIdleDisplay() {
+    var hangSecs = Math.max(1, parseInt(inputHang.value, 10) || 1);
+    countdown.textContent = hangSecs;
+    countdown.classList.remove('tick');
+    ringProgress.style.transition = 'none';
+    ringProgress.style.strokeDashoffset = 0; // full ring
+    requestAnimationFrame(function() { ringProgress.style.transition = ''; });
+  }
+
   /* ── Reset ── */
   function handleReset() {
     clearInterval(intervalId);
@@ -1138,22 +1148,14 @@
     timeRemaining = 0;
     totalTime     = 0;
 
-    wrapper.classList.remove('get-ready-state', 'hang-state', 'rest-state', 'done-state');
+    wrapper.classList.remove('get-ready-state', 'hang-state', 'rest-state', 'done-state', 'paused-state');
 
-    // FIX: disable transition momentarily so the ring snaps to empty instantly
-    ringProgress.style.transition = 'none';
-    ringProgress.style.strokeDashoffset = CIRCUMFERENCE;
-    requestAnimationFrame(function() {
-      ringProgress.style.transition = '';
-    });
-
-    countdown.textContent = '--';
-    countdown.classList.remove('tick');
     stateLabel.textContent = 'READY';
     setCounter.textContent = 'Set \u2014 of \u2014';
     btnStart.textContent = 'START';
     btnStart.setAttribute('aria-label', 'Start timer');
     enableSettings(true);
+    showIdleDisplay();
     announce('Timer reset.');
   }
 
@@ -1172,10 +1174,15 @@
 
   allInputs.forEach(function(inp) {
     inp.addEventListener('change', saveSettings);
-    inp.addEventListener('blur',   function() { clampInput(inp); });
+    inp.addEventListener('blur', function() { clampInput(inp); });
     inp.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') { clampInput(inp); inp.blur(); }
     });
+  });
+
+  // Keep idle display in sync when hang time is changed
+  inputHang.addEventListener('input', function() {
+    if (state === 'idle') showIdleDisplay();
   });
 
   chkSound.addEventListener('change', saveSettings);
@@ -1184,8 +1191,7 @@
   /* ── Initialise ── */
   loadSettings();
   updateSetCounter();
-  // Ensure ring is visually empty on load
-  ringProgress.style.strokeDashoffset = CIRCUMFERENCE;
+  showIdleDisplay();
 
 })();
 </script>
