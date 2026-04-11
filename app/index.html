@@ -983,10 +983,8 @@
     if (s === 'done')                           wrapper.classList.add('done-state');
   }
 
-  /* ── Settings lock ── */
-  function enableSettings(enabled) {
-    allInputs.forEach(function(inp) { inp.disabled = !enabled; });
-  }
+  /* ── Settings lock (no-op — settings remain editable during session) ── */
+  function enableSettings(enabled) { void enabled; /* intentionally unrestricted */ }
 
   /* ── Transition: GET READY ── */
   function startGetReady() {
@@ -1183,6 +1181,36 @@
   // Keep idle display in sync when hang time is changed
   inputHang.addEventListener('input', function() {
     if (state === 'idle') showIdleDisplay();
+  });
+
+  // Apply hang time change immediately if currently hanging
+  inputHang.addEventListener('change', function() {
+    if (state !== 'hanging' && state !== 'paused_hang') return;
+    var newSecs = Math.max(1, parseInt(inputHang.value, 10) || 1);
+    var elapsed = totalTime - timeRemaining;
+    totalTime = newSecs;
+    timeRemaining = Math.max(0, totalTime - elapsed);
+    updateDisplay();
+  });
+
+  // Apply rest time change immediately if currently resting
+  inputRest.addEventListener('change', function() {
+    if (state !== 'resting' && state !== 'paused_rest') return;
+    var newSecs = Math.max(1, parseInt(inputRest.value, 10) || 1);
+    var elapsed = totalTime - timeRemaining;
+    totalTime = newSecs;
+    timeRemaining = Math.max(0, totalTime - elapsed);
+    updateDisplay();
+  });
+
+  // Apply sets change immediately during a session
+  inputSets.addEventListener('change', function() {
+    if (state === 'idle' || state === 'done') return;
+    var newTotal = Math.max(1, parseInt(inputSets.value, 10) || 1);
+    totalSets = newTotal;
+    // If current set is now beyond the new total, finish at end of current phase
+    // (tick will call finishWorkout when timeRemaining hits 0)
+    updateSetCounter();
   });
 
   chkSound.addEventListener('change', saveSettings);
