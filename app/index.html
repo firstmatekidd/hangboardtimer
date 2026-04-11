@@ -828,6 +828,7 @@
   let totalTime     = 0;
   let intervalId    = null;
   let audioCtx      = null;
+  let wakeLock      = null;
 
   /* ── DOM refs ── */
   const wrapper      = document.getElementById('app-wrapper');
@@ -894,6 +895,30 @@
     srAnnounce.textContent = '';
     requestAnimationFrame(() => { srAnnounce.textContent = msg; });
   }
+
+  /* ── Wake Lock ── */
+  async function acquireWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+    } catch (e) { /* not supported or denied — degrade silently */ }
+  }
+
+  function releaseWakeLock() {
+    if (wakeLock) {
+      wakeLock.release().catch(function() {});
+      wakeLock = null;
+    }
+  }
+
+  // Re-acquire when page becomes visible again and timer is running
+  document.addEventListener('visibilitychange', function() {
+    if (document.visibilityState === 'visible' && intervalId !== null) {
+      acquireWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+  });
 
   /* ── Audio (Web Audio API — no external files) ── */
   function initAudio() {
@@ -1033,6 +1058,7 @@
     state = 'done';
     clearInterval(intervalId);
     intervalId = null;
+    releaseWakeLock();
     setWrapperState('done');
     // FIX: ring shows full (offset=0) to signal complete
     ringProgress.style.strokeDashoffset = 0;
@@ -1095,11 +1121,13 @@
       btnStart.setAttribute('aria-label', 'Pause timer');
       startGetReady();
       intervalId = setInterval(tick, 1000);
+      acquireWakeLock();
 
     } else if (state === 'get_ready') {
       // ── Pause during get_ready ──
       clearInterval(intervalId);
       intervalId = null;
+      releaseWakeLock();
       state = 'paused_get_ready';
       setWrapperState('paused_get_ready');
       btnStart.textContent = 'RESUME';
@@ -1110,6 +1138,7 @@
       // ── Pause ──
       clearInterval(intervalId);
       intervalId = null;
+      releaseWakeLock();
       state = (state === 'hanging') ? 'paused_hang' : 'paused_rest';
       setWrapperState(state); // preserve colour class
       btnStart.textContent = 'RESUME';
@@ -1124,6 +1153,7 @@
       btnStart.setAttribute('aria-label', 'Pause timer');
       announce('Timer resumed.');
       intervalId = setInterval(tick, 1000);
+      acquireWakeLock();
     }
   }
 
@@ -1141,6 +1171,7 @@
   function handleReset() {
     clearInterval(intervalId);
     intervalId = null;
+    releaseWakeLock();
     state         = 'idle';
     currentSet    = 0;
     timeRemaining = 0;
