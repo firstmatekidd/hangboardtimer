@@ -1,5 +1,4 @@
 ## TODO
-* Landscape not implemented
 * Should be responsive at 320px width so that it doesn't scroll left/right
 * Ad banner at the bottom is not adhering to absolute positioning requirement
 * State display should have a bigger font size
@@ -19,3 +18,4 @@
 * Fonts used have serifs and should be san-serif
 * Change the countdown timer numbering to use the same font as the rest of the app
 * No GET_READY state
+* Landscape implemented

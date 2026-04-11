@@ -564,6 +564,79 @@
     header { padding: 36px 0 16px; margin-bottom: 36px; }
     .btn { min-height: 68px; }
   }
+
+  /* ── Landscape mode (phones in landscape) ── */
+  @media (orientation: landscape) and (max-height: 500px) {
+    body { align-items: flex-start; }
+
+    #app-wrapper {
+      max-width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto 1fr auto;
+      align-items: stretch;
+      padding: 0;
+      gap: 0;
+    }
+
+    /* Header spans full width */
+    header {
+      grid-column: 1 / -1;
+      padding: 10px 16px;
+      margin-bottom: 0;
+    }
+
+    /* Left column: timer section fills and centers in available height */
+    #timer-section {
+      grid-column: 1;
+      grid-row: 2;
+      align-self: stretch;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 8px 12px 8px 16px;
+      margin-bottom: 0;
+    }
+
+    /* Ring grows to use available height */
+    :root { --ring-size: min(60vh, 44vw, 320px); }
+
+    /* Countdown larger to fill the ring */
+    #countdown { font-size: clamp(2.5rem, 12vh, 6rem); }
+
+    #state-label { font-size: clamp(0.8rem, 3vh, 1.1rem); }
+
+    #set-counter { font-size: clamp(0.75rem, 2.5vh, 0.9rem); }
+
+    /* Right column: single flex container so items stack tightly */
+    #right-col {
+      grid-column: 2;
+      grid-row: 2;
+      align-self: start;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      padding: 8px 16px 16px 12px;
+      gap: 10px;
+    }
+
+    /* Ad spans both columns at the bottom */
+    #ad-section {
+      grid-column: 1 / -1;
+      grid-row: 3;
+      padding: 0 16px 16px;
+    }
+
+    /* Reset portrait margins/paddings inside right col */
+    #right-col > *,
+    #right-col section {
+      margin-bottom: 0;
+      width: 100%;
+    }
+
+    hr.divider { display: none; }
+  }
 </style>
 </head>
 <body>
@@ -615,6 +688,7 @@
   </section>
 
   <!-- Controls Section -->
+  <div id="right-col">
   <section id="controls-section" aria-label="Controls">
     <h2 class="visually-hidden">Controls</h2>
     <div id="controls">
@@ -716,6 +790,8 @@
   </section>
 
   <hr class="divider">
+
+  </div><!-- /#right-col -->
 
   <!-- Ad Section -->
   <section id="ad-section" aria-label="Advertisement">
