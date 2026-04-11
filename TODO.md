@@ -1,7 +1,6 @@
 ## TODO
 * Should be responsive at 320px width so that it doesn't scroll left/right
 * Ad banner at the bottom is not adhering to the fixed positioning requirement
-* State display should have a bigger font size
 * Settings should be editable while paused
 * Reset button should be higher contrast against the background and it's text.
 * Increase contrast ratio between the text on the Start button and the start button's background color
@@ -11,6 +10,8 @@
 * Use the wakeLock API to keep the screen from going to sleep while the app is in any states that are counting down.
 
 ## DONE
+* State display should have a bigger font size
+* Hang count should have a bigger font size, especially in landscape.
 * Increase color contrast in the resting and done states
 * The start button lowers opacity on hover but the reset and help buttons brighten. Let's keep consistent and change the start button to also brighten
 * implement haptics
