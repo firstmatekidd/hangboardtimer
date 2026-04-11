@@ -1,6 +1,6 @@
 ## TODO
 * Should be responsive at 320px width so that it doesn't scroll left/right
-* Ad banner at the bottom is not adhering to absolute positioning requirement
+* Ad banner at the bottom is not adhering to the fixed positioning requirement
 * State display should have a bigger font size
 * Settings should be editable while paused
 * Reset button should be higher contrast against the background and it's text.

@@ -209,6 +209,12 @@
   #app-wrapper.done-state #state-label   { color: var(--accent-done); }
   #app-wrapper.done-state #btn-start     { background-color: var(--accent-done); }
 
+  /* ── Paused state — dim the timer area ── */
+  #app-wrapper.paused-state #timer-ring-wrap {
+    opacity: 0.4;
+    transition: opacity var(--transition-state);
+  }
+
   /* ── Controls section ── */
   #controls-section {
     width: 100%;
@@ -968,10 +974,12 @@
      so colours don't reset to default while paused.
   */
   function setWrapperState(s) {
-    wrapper.classList.remove('get-ready-state', 'hang-state', 'rest-state', 'done-state');
+    wrapper.classList.remove('get-ready-state', 'hang-state', 'rest-state', 'done-state', 'paused-state');
     if (s === 'get_ready')                      wrapper.classList.add('get-ready-state');
-    if (s === 'hanging' || s === 'paused_hang') wrapper.classList.add('hang-state');
-    if (s === 'resting' || s === 'paused_rest') wrapper.classList.add('rest-state');
+    if (s === 'hanging')                        wrapper.classList.add('hang-state');
+    if (s === 'resting')                        wrapper.classList.add('rest-state');
+    if (s === 'paused_hang')                    wrapper.classList.add('hang-state', 'paused-state');
+    if (s === 'paused_rest')                    wrapper.classList.add('rest-state', 'paused-state');
     if (s === 'done')                           wrapper.classList.add('done-state');
   }
 
