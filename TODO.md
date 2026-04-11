@@ -1,10 +1,11 @@
 ## TODO
 * Eliminate the pause at zero. The transition sound is playing too late.
-* Reduce letter spacing on the state display. "Get Ready" is a bit too wide.
-* H1 is read out as three separate words
-* Bolded words in the help section break up the flow of text for screen readers.
+* iOS voiceover isn't reading out the seconds. Combine all the elements inside the timer for the screen reader to read out the number of seconds and the status.
 
 ## DONE
+* Reduce letter spacing on the state display. "Get Ready" is a bit too wide.
+* Bolded words in the help section break up the flow of text for screen readers.
+* H1 is read out as three separate words
 * Honor "prefers reduced motion" settings to disable the ring animations and particle effects if it's enabled.
 * When in the rest state and we start doing ticks to get ready, change the wording and the ring color to the same as we do for the rest state.
 * Add a fanfare particle explosion when the done state is reached.

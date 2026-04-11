@@ -176,7 +176,7 @@
     font-family: var(--font-display);
     font-size: clamp(1rem, 5vw, 1.4rem);
     font-weight: 700;
-    letter-spacing: 0.28em;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--accent-hang);
     transition: color var(--transition-state);
@@ -471,7 +471,7 @@
   }
 
   #help-panel p:last-child { margin-bottom: 0; }
-  #help-panel strong { color: var(--text); font-weight: 600; }
+  #help-panel b { color: var(--text); font-weight: 600; }
 
   /* ── Divider ── */
   .divider {
@@ -736,7 +736,7 @@
 
   <!-- Header -->
   <header>
-    <h1>Hang<span>board</span> Timer</h1>
+    <h1 aria-label="Hangboard Timer"><div aria-hidden="true">Hang<span>board</span> Timer</div></h1>
   </header>
   <main>
     <!-- Timer Section -->
@@ -839,11 +839,11 @@
       <div id="help-panel">
         <h2>Help</h2>
         <h3>How to use</h3>
-        <p><strong>Set your times:</strong> Enter the number of seconds for each hang, rest period, and how many sets you want to complete.</p>
-        <p><strong>Start training:</strong> Press <strong>START</strong> to begin. The timer counts down your hang, then automatically switches to rest, repeating for the number of sets you configured.</p>
-        <p><strong>Sounds:</strong> A high beep signals the start of a hang; a lower tone signals rest. Disable sounds with the checkbox in Settings if training in a quiet environment.</p>
-        <p><strong>Pause &amp; reset:</strong> <strong>PAUSE</strong> freezes the timer mid-session. <strong>RESET</strong> returns to the beginning without changing your settings.</p>
-        <p><strong>Settings are saved</strong> automatically between visits so you can close and reopen the app without losing your configuration.</p>
+        <p><b>Set your times:</b> Enter the number of seconds for each hang, rest period, and how many sets you want to complete.</p>
+        <p><b>Start training:</b> Press <b>START</b> to begin. The timer counts down your hang, then automatically switches to rest, repeating for the number of sets you configured.</p>
+        <p><b>Sounds:</b> A high beep signals the start of a hang; a lower tone signals rest. Disable sounds with the checkbox in Settings if training in a quiet environment.</p>
+        <p><b>Pause &amp; reset:</b> <b>PAUSE</b> freezes the timer mid-session. <b>RESET</b> returns to the beginning without changing your settings.</p>
+        <p><b>Settings are saved</b> automatically between visits so you can close and reopen the app without losing your configuration.</p>
       </div>
     </section>
 
