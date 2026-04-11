@@ -69,7 +69,7 @@
   #app-wrapper {
     width: 100%;
     max-width: 520px;
-    padding: 0 16px 48px;
+    padding: 0 16px 106px; /* 90px ad + 16px margin */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -543,14 +543,23 @@
   }
 
   /* ── Ad section ── */
-  #ad-section { width: 100%; }
+  #ad-section {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background-color: var(--bg);
+    display: flex;
+    justify-content: center;
+  }
 
   #ad-banner {
     width: 100%;
-    min-height: 90px;
+    max-width: 520px;
+    height: 90px;
     background-color: var(--surface);
-    border: 1px dashed var(--border);
-    border-radius: 6px;
+    border-top: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -565,7 +574,7 @@
 
   /* ── Responsive ── */
   @media (min-width: 480px) {
-    #app-wrapper { padding: 0 24px 64px; }
+    #app-wrapper { padding: 0 24px 106px; }
     header { padding: 36px 0 16px; margin-bottom: 36px; }
     .btn { min-height: 68px; }
   }
@@ -578,7 +587,7 @@
       max-width: 100%;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto 1fr auto;
+      grid-template-rows: auto 1fr;
       align-items: stretch;
       padding: 0;
       gap: 0;
@@ -604,33 +613,33 @@
       margin-bottom: 0;
     }
 
-    /* Ring grows to use available height */
-    :root { --ring-size: min(60vh, 44vw, 320px); }
+    /* Ring grows to use available height — smaller to keep set counter visible above ad */
+    :root { --ring-size: min(48vh, 44vw, 260px); }
 
-    /* Countdown larger to fill the ring */
-    #countdown { font-size: clamp(2.5rem, 12vh, 6rem); }
+    /* Countdown re-clamped for smaller ring */
+    #countdown { font-size: clamp(2rem, 10vh, 5rem); }
 
     #state-label { font-size: clamp(0.9rem, 3.5vh, 1.2rem); }
 
-    #set-counter { font-size: clamp(1.75rem, 2.5vh, 0.9rem); }
+    #set-counter { font-size: clamp(0.75rem, 2.5vh, 0.9rem); }
 
-    /* Right column: single flex container so items stack tightly */
+    /* Ad banner spans full viewport width in landscape */
+    #ad-banner { max-width: 100%; }
+
+    /* Right column: sticky, non-scrolling, fits above fixed ad */
     #right-col {
       grid-column: 2;
       grid-row: 2;
+      position: sticky;
+      top: 0;
       align-self: start;
+      max-height: calc(100vh - 40px - 90px); /* viewport - header - ad */
+      overflow-y: auto;
       display: flex;
       flex-direction: column;
       align-items: stretch;
       padding: 8px 16px 16px 12px;
       gap: 10px;
-    }
-
-    /* Ad spans both columns at the bottom */
-    #ad-section {
-      grid-column: 1 / -1;
-      grid-row: 3;
-      padding: 0 16px 16px;
     }
 
     /* Reset portrait margins/paddings inside right col */
@@ -764,8 +773,6 @@
     </div>
   </section>
 
-  <hr class="divider">
-
   <!-- Affiliate Section -->
   <section id="affiliate-section" aria-label="Recommended gear">
     <h2>Recommended Gear</h2>
@@ -793,8 +800,6 @@
       </div>
     </a>
   </section>
-
-  <hr class="divider">
 
   </div><!-- /#right-col -->
 
