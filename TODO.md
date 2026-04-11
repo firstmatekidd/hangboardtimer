@@ -1,8 +1,10 @@
 ## TODO
-* Add a fanfare particle explosion when the done state is reached.
+* Honor "prefers reduced motion" settings to disable the ring animations and particle effects if it's enabled.
+* When in the rest state and we start doing ticks to get ready, change the wording and the ring color to the same as we do for the rest state.
 
 
 ## DONE
+* Add a fanfare particle explosion when the done state is reached.
 * Recommended gear region is a whole link and probably doesn't need to be. Screen reader doesn't access the content inside of it and should.
 * Help section reads out to screen reader as an empty section when it is collapsed.
 * "Hang seconds" and other labels read out as two elements and should be combined for screen readers

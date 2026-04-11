@@ -613,6 +613,22 @@
     text-transform: uppercase;
   }
 
+  /* ── Particle canvas overlay ── */
+  #particle-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9998; /* below grain texture (9999), above everything else */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  #particle-canvas.active {
+    opacity: 1;
+  }
+
   /* ── Responsive ── */
   @media (min-width: 480px) {
     #app-wrapper { padding: 0 24px 106px; }
@@ -847,6 +863,8 @@
       <p>Advertisement</p>
     </div>
   </section>
+
+<canvas id="particle-canvas" aria-hidden="true"></canvas>
 
 </div><!-- /#app-wrapper -->
 
@@ -1355,6 +1373,251 @@
   loadSettings();
   updateSetCounter();
   showIdleDisplay();
+
+})();
+</script>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   HANGBOARD TIMER — CELEBRATION PARTICLE SYSTEM
+   Particles emit from the ring edge and drift outward, using the
+   done-state green palette for full colour-scheme integration.
+   All tunable parameters are in the CONFIG object below.
+   ═══════════════════════════════════════════════════════════════ */
+(function () {
+  'use strict';
+
+  /* ──────────────────────────────────────────────────────────────
+     CONFIG — edit any value here to tune the particle system.
+     ────────────────────────────────────────────────────────────── */
+  const CONFIG = {
+
+    /* ── Emission ── */
+    EMIT_RATE:          3,      // new particles spawned per frame while emitting
+    EMIT_DURATION_MS:   400,   // how long to keep spawning particles (ms)
+
+    /* ── Origin — ring edge ── */
+    // Particles spawn on the circumference of the timer ring.
+    // ANGLE_SPREAD controls how much of the ring emits (2π = full circle).
+    ANGLE_SPREAD:       Math.PI * 2,  // radians — full ring
+    ORIGIN_JITTER:      6,            // px of random offset from the exact ring edge
+
+    /* ── Particle physics ── */
+    SPEED_MIN:          1.2,    // minimum outward drift speed (px/frame)
+    SPEED_MAX:          3.2,    // maximum outward drift speed
+    GRAVITY:            0.095,  // positive = downward gravity (negative = upward float)
+    DRAG:               0.985,  // velocity multiplier per frame (< 1 = air resistance)
+    WOBBLE:             0.04,   // lateral random walk per frame (organic feel)
+
+    /* ── Particle appearance ── */
+    SIZE_MIN:           2.5,    // minimum particle radius (px)
+    SIZE_MAX:           5.5,    // maximum particle radius (px)
+    // Shapes: 'dot' (filled circle), 'spark' (thin line radiating outward)
+    SHAPES: ['dot', 'dot', 'spark'],  // repeat 'dot' to weight it higher
+
+    /* ── Colour palette — done-state greens ── */
+    COLORS: [
+      '#4a9e5c',   // --accent-done base green
+      '#6abf7a',   // lighter green
+      '#3a7d48',   // deeper green
+      '#a8e6b8',   // very pale mint — adds highlight sparkle
+      '#f0ede8',   // warm white — occasional bright spark
+    ],
+    // How opaque each particle starts (0–1). Fades out as it ages.
+    INITIAL_ALPHA:      0.9,
+
+    /* ── Lifetime ── */
+    LIFETIME_MIN:       100,     // frames a particle lives (min)
+    LIFETIME_MAX:       180,    // frames a particle lives (max)
+    FADE_START_PCT:     0.55,   // fraction of life at which fading begins
+
+    /* ── Glow ── */
+    GLOW_ENABLED:       true,   // soft bloom around each particle
+    GLOW_BLUR:          6,      // shadowBlur amount (px)
+  };
+  /* ────────────────────────────────────────────────────────────── */
+
+  const canvas = document.getElementById('particle-canvas');
+  const ctx    = canvas.getContext('2d');
+  let   particles  = [];
+  let   rafId      = null;
+  let   emitTimer  = null;
+  let   emitting   = false;
+
+  /* ── Resize canvas to fill viewport ── */
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  /* ── Locate the ring centre and radius in viewport coordinates ── */
+  function getRingInfo() {
+    const wrap = document.getElementById('timer-ring-wrap');
+    if (!wrap) return null;
+    const rect   = wrap.getBoundingClientRect();
+    const cx     = rect.left + rect.width  * 0.5;
+    const cy     = rect.top  + rect.height * 0.5;
+    // The SVG ring has r=44 in a 100-unit viewBox; the rendered radius is:
+    const radius = (rect.width * 0.5) * (44 / 50); // 44/50 = r / half-viewBox
+    return { cx, cy, radius };
+  }
+
+  /* ── Spawn a single particle on the ring edge ── */
+  function makeParticle(ring) {
+    // Random angle around the ring
+    const baseAngle  = -Math.PI * 0.5; // start from top (ring is rotated -90deg in CSS)
+    const halfSpread = CONFIG.ANGLE_SPREAD * 0.5;
+    const angle      = baseAngle + (Math.random() - 0.5) * CONFIG.ANGLE_SPREAD;
+
+    // Position on ring circumference + jitter
+    const jitter = (Math.random() - 0.5) * CONFIG.ORIGIN_JITTER;
+    const r      = ring.radius + jitter;
+    const x      = ring.cx + Math.cos(angle) * r;
+    const y      = ring.cy + Math.sin(angle) * r;
+
+    // Velocity: outward radial direction + random variation
+    const speed  = CONFIG.SPEED_MIN + Math.random() * (CONFIG.SPEED_MAX - CONFIG.SPEED_MIN);
+    const spread = 0.7; // angular spread around the pure radial direction
+    const vAngle = angle + (Math.random() - 0.5) * spread;
+    const vx     = Math.cos(vAngle) * speed;
+    // Upward bias: subtract a fraction of speed so particles arc before falling
+    const vy     = Math.sin(vAngle) * speed - speed * 0.5;
+
+    const life   = CONFIG.LIFETIME_MIN + Math.floor(Math.random() * (CONFIG.LIFETIME_MAX - CONFIG.LIFETIME_MIN));
+    const shape  = CONFIG.SHAPES[Math.floor(Math.random() * CONFIG.SHAPES.length)];
+
+    return {
+      x, y, vx, vy,
+      angle,           // original emission angle (used to orient sparks)
+      size:  CONFIG.SIZE_MIN + Math.random() * (CONFIG.SIZE_MAX - CONFIG.SIZE_MIN),
+      color: CONFIG.COLORS[Math.floor(Math.random() * CONFIG.COLORS.length)],
+      shape,
+      life,
+      age:   0,
+    };
+  }
+
+  /* ── Draw a single particle ── */
+  function drawParticle(p, alpha) {
+    ctx.save();
+    ctx.globalAlpha = alpha * CONFIG.INITIAL_ALPHA;
+
+    if (CONFIG.GLOW_ENABLED) {
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur  = CONFIG.GLOW_BLUR;
+    }
+
+    ctx.fillStyle   = p.color;
+    ctx.strokeStyle = p.color;
+
+    if (p.shape === 'spark') {
+      // A short line radiating outward from the ring
+      const len = p.size * 2.5;
+      ctx.lineWidth   = Math.max(0.8, p.size * 0.4);
+      ctx.lineCap     = 'round';
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.lineTo(
+        p.x + Math.cos(p.angle) * len,
+        p.y + Math.sin(p.angle) * len
+      );
+      ctx.stroke();
+    } else {
+      // Soft dot
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  /* ── Animation loop ── */
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Emit new particles each frame while active
+    if (emitting) {
+      const ring = getRingInfo();
+      if (ring) {
+        for (let i = 0; i < CONFIG.EMIT_RATE; i++) {
+          particles.push(makeParticle(ring));
+        }
+      }
+    }
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.age++;
+
+      // Physics
+      p.vy += CONFIG.GRAVITY;
+      p.vx *= CONFIG.DRAG;
+      p.vy *= CONFIG.DRAG;
+      // Gentle lateral wobble for organic feel
+      p.vx += (Math.random() - 0.5) * CONFIG.WOBBLE;
+      p.x  += p.vx;
+      p.y  += p.vy;
+
+      // Alpha — hold full opacity, then fade
+      const lifeFraction = p.age / p.life;
+      let alpha = 1;
+      if (lifeFraction >= CONFIG.FADE_START_PCT) {
+        alpha = 1 - (lifeFraction - CONFIG.FADE_START_PCT) / (1 - CONFIG.FADE_START_PCT);
+      }
+      alpha = Math.max(0, alpha);
+
+      if (p.age >= p.life) {
+        particles.splice(i, 1);
+        continue;
+      }
+
+      drawParticle(p, alpha);
+    }
+
+    if (particles.length > 0 || emitting) {
+      rafId = requestAnimationFrame(loop);
+    } else {
+      // All particles gone — hide canvas
+      canvas.classList.remove('active');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      rafId = null;
+    }
+  }
+
+  /* ── Public: launch the celebration ── */
+  function celebrate() {
+    // Clean up any prior run
+    if (emitTimer) { clearTimeout(emitTimer); emitTimer = null; }
+    particles = [];
+    emitting  = true;
+    canvas.classList.add('active');
+
+    // Stop spawning after EMIT_DURATION_MS — existing particles keep animating
+    emitTimer = setTimeout(function () {
+      emitting = false;
+    }, CONFIG.EMIT_DURATION_MS);
+
+    // Kick off loop (only one at a time)
+    if (!rafId) rafId = requestAnimationFrame(loop);
+  }
+
+  /* ── Hook into the existing timer's finishWorkout ── */
+  // Observe wrapper class list — no changes to timer source code needed.
+  const appWrapper = document.getElementById('app-wrapper');
+  let   wasDone    = false;
+
+  const observer = new MutationObserver(function () {
+    const isDone = appWrapper.classList.contains('done-state');
+    if (isDone && !wasDone) {
+      wasDone = true;
+      celebrate();
+    }
+    if (!isDone) wasDone = false;
+  });
+
+  observer.observe(appWrapper, { attributes: true, attributeFilter: ['class'] });
 
 })();
 </script>
