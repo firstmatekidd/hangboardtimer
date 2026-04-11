@@ -4,13 +4,14 @@
 * State display should have a bigger font size
 * Settings should be editable while paused
 * Reset button should be higher contrast against the background and it's text.
-* Increase contrast ration between the text on the Start button and the start button's background color
+* Increase contrast ratio between the text on the Start button and the start button's background color
 * The timer never goes to 0 and the ring doesn't completely drain. Handle the edge case so that it goes completely to 0 and then resets to the next state, even if that means we don't see the ring completely full.
 * Add a fanfare particle explosion when the done state is reached.
 * Choose a different green color so that it has proper color contrast with the white text
 * Use the wakeLock API to keep the screen from going to sleep while the app is in any states that are counting down.
 
 ## DONE
+* Increase color contrast in the resting and done states
 * The start button lowers opacity on hover but the reset and help buttons brighten. Let's keep consistent and change the start button to also brighten
 * implement haptics
 * Fonts used have serifs and should be san-serif
