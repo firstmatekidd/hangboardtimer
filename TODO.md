@@ -1,7 +1,6 @@
 ## TODO
 * Should be responsive at 320px width so that it doesn't scroll left/right
 * Ad banner at the bottom is not adhering to the fixed positioning requirement
-* Reset button should be higher contrast against the background and it's text.
 * Increase contrast ratio between the text on the Start button and the start button's background color
 * The timer never goes to 0 and the ring doesn't completely drain. Handle the edge case so that it goes completely to 0 and then resets to the next state, even if that means we don't see the ring completely full.
 * Add a fanfare particle explosion when the done state is reached.
@@ -9,6 +8,7 @@
 * Use the wakeLock API to keep the screen from going to sleep while the app is in any states that are counting down.
 
 ## DONE
+* Reset button should be higher contrast against the background and it's text.
 * Settings should be editable while paused
 * State display should have a bigger font size
 * Hang count should have a bigger font size, especially in landscape.
