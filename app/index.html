@@ -819,8 +819,7 @@
 
   /* ── State machine ──
      idle → get_ready (3s) → hanging → resting → hanging → … → done
-     Any active hanging/resting state can pause → paused_hang / paused_rest → resume
-     get_ready cannot be paused
+     Any active state can pause → paused_get_ready / paused_hang / paused_rest → resume
   */
   let state         = 'idle';
   let currentSet    = 0;
@@ -975,8 +974,9 @@
   */
   function setWrapperState(s) {
     wrapper.classList.remove('get-ready-state', 'hang-state', 'rest-state', 'done-state', 'paused-state');
-    if (s === 'get_ready')                      wrapper.classList.add('get-ready-state');
-    if (s === 'hanging')                        wrapper.classList.add('hang-state');
+    if (s === 'get_ready')                          wrapper.classList.add('get-ready-state');
+    if (s === 'paused_get_ready')                   wrapper.classList.add('get-ready-state', 'paused-state');
+    if (s === 'hanging')                            wrapper.classList.add('hang-state');
     if (s === 'resting')                        wrapper.classList.add('rest-state');
     if (s === 'paused_hang')                    wrapper.classList.add('hang-state', 'paused-state');
     if (s === 'paused_rest')                    wrapper.classList.add('rest-state', 'paused-state');
@@ -1099,8 +1099,14 @@
       intervalId = setInterval(tick, 1000);
 
     } else if (state === 'get_ready') {
-      // Cannot pause during get_ready — ignore the press
-      return;
+      // ── Pause during get_ready ──
+      clearInterval(intervalId);
+      intervalId = null;
+      state = 'paused_get_ready';
+      setWrapperState('paused_get_ready');
+      btnStart.textContent = 'RESUME';
+      btnStart.setAttribute('aria-label', 'Resume timer');
+      announce('Timer paused.');
 
     } else if (state === 'hanging' || state === 'resting') {
       // ── Pause ──
@@ -1112,9 +1118,9 @@
       btnStart.setAttribute('aria-label', 'Resume timer');
       announce('Timer paused.');
 
-    } else if (state === 'paused_hang' || state === 'paused_rest') {
+    } else if (state === 'paused_get_ready' || state === 'paused_hang' || state === 'paused_rest') {
       // ── Resume ──
-      state = (state === 'paused_hang') ? 'hanging' : 'resting';
+      state = state === 'paused_get_ready' ? 'get_ready' : (state === 'paused_hang' ? 'hanging' : 'resting');
       setWrapperState(state);
       btnStart.textContent = 'PAUSE';
       btnStart.setAttribute('aria-label', 'Pause timer');
