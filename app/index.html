@@ -281,6 +281,17 @@
     text-align: center;
   }
 
+  #help-panel > h2 {
+    font-family: var(--font-display);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+    text-align: center;
+  }
+
   #settings {
     display: flex;
     flex-direction: column;
@@ -681,8 +692,6 @@
 
   <!-- Timer Section -->
   <section id="timer-section" aria-label="Timer">
-    <h2 class="visually-hidden">Timer</h2>
-
     <div id="timer-ring-wrap">
       <!--
         Decorative SVG ring — aria-hidden so screen readers ignore it.
@@ -721,7 +730,6 @@
   <!-- Controls Section -->
   <div id="right-col">
   <section id="controls-section" aria-label="Controls">
-    <h2 class="visually-hidden">Controls</h2>
     <div id="controls">
       <button id="btn-start" class="btn" aria-label="Start timer">START</button>
       <button id="btn-reset" class="btn" aria-label="Reset timer">RESET</button>
@@ -779,8 +787,8 @@
     Uses hidden attribute (not display:none) so ATs respect collapsed state.
   -->
   <section id="help-section" aria-label="Help">
-    <h2 class="visually-hidden">Help</h2>
     <div id="help-panel" hidden>
+      <h2>Help</h2>
       <h3>How to use</h3>
       <p><strong>Set your times:</strong> Enter the number of seconds for each hang, rest period, and how many sets you want to complete.</p>
       <p><strong>Start training:</strong> Press <strong>START</strong> to begin. The timer counts down your hang, then automatically switches to rest, repeating for the number of sets you configured.</p>
@@ -819,7 +827,6 @@
 
   <!-- Ad Section -->
   <section id="ad-section" aria-label="Advertisement">
-    <h2 class="visually-hidden">Advertisement</h2>
     <div id="ad-banner" role="img" aria-label="Advertisement placeholder">
       <p>Advertisement</p>
     </div>
