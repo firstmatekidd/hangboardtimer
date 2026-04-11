@@ -725,7 +725,7 @@
         </div>
 
         <div class="setting-item">
-          <label for="input-sets">Sets<span>count</span></label>
+          <label for="input-sets">Hang<span>count</span></label>
           <input type="number" id="input-sets" inputmode="numeric" min="1" value="5">
         </div>
 
@@ -962,9 +962,9 @@
   /* ── Set counter ── */
   function updateSetCounter() {
     if (state === 'idle') {
-      setCounter.textContent = 'Set \u2014 of \u2014';
+      setCounter.textContent = 'Hang \u2014 of \u2014';
     } else {
-      setCounter.textContent = 'Set ' + currentSet + ' of ' + totalSets;
+      setCounter.textContent = 'Hang ' + currentSet + ' of ' + totalSets;
     }
   }
 
