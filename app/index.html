@@ -238,7 +238,7 @@
     letter-spacing: 0.14em;
     text-transform: uppercase;
     cursor: pointer;
-    transition: opacity 0.15s, transform 0.1s, background-color var(--transition-state);
+    transition: filter 0.15s, transform 0.1s, background-color var(--transition-state);
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -255,7 +255,7 @@
     flex: 2;
   }
 
-  #btn-start:hover { opacity: 0.88; }
+  #btn-start:hover { filter: brightness(1.15); outline: 1px solid rgba(240,237,232,1); outline-offset: 0; }
 
   #btn-reset {
     background-color: var(--surface-2);
