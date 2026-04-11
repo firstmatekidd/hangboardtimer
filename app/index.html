@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0f0f0f">
+<meta name="description" content="Hangboard interval timer for climbing training. Set hang time, rest time, and number of sets.">
+<title>Hangboard Timer</title>
+<style>
+  /* ── CSS Custom Properties ── */
+  :root {
+    --bg:            #0f0f0f;
+    --surface:       #1a1a1a;
+    --surface-2:     #222222;
+    --text:          #f0ede8;
+    --text-muted:    #8a857e;
+    --accent-hang:   #e8621a;
+    --accent-rest:   #4a7fa5;
+    --accent-done:   #6dba7a;
+    --border:        #2e2e2e;
+    --border-focus:  #f0ede8;
+    --ring-size:     min(58vw, 52vh, 300px);
+    --ring-stroke:   10;
+    --transition-state: 300ms ease;
+    --font-display: 'Courier New', Courier, monospace;
+    --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  /* ── Reset ── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+  /* ── Grain texture overlay ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 300px 300px;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--font-ui);
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── Visually hidden utility ── */
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ── App wrapper ── */
+  #app-wrapper {
+    width: 100%;
+    max-width: 520px;
+    padding: 0 16px 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* ── Header ── */
+  header {
+    width: 100%;
+    padding: 28px 0 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+  }
+
+  header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1rem, 4.5vw, 1.35rem);
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+
+  header h1 span {
+    color: var(--accent-hang);
+  }
+
+  /* ── Timer section ── */
+  #timer-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  /* ── SVG Ring ── */
+  #timer-ring-wrap {
+    position: relative;
+    width: var(--ring-size);
+    height: var(--ring-size);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #timer-ring-wrap svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+
+  .ring-track {
+    fill: none;
+    stroke: var(--surface-2);
+    stroke-width: var(--ring-stroke);
+  }
+
+  #ring-progress {
+    fill: none;
+    stroke: var(--accent-hang);
+    stroke-width: var(--ring-stroke);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.9s linear, stroke var(--transition-state);
+  }
+
+  /* ── Timer center content ── */
+  #timer-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    z-index: 1;
+  }
+
+  #countdown {
+    font-family: var(--font-display);
+    font-size: clamp(3.4rem, 18vw, 7.5rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    transition: color var(--transition-state);
+    /* tick pulse animation */
+    animation: none;
+  }
+
+  #countdown.tick {
+    animation: tick-pulse 0.12s ease-out;
+  }
+
+  @keyframes tick-pulse {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.06); }
+    100% { transform: scale(1); }
+  }
+
+  #state-label {
+    font-family: var(--font-display);
+    font-size: clamp(0.7rem, 3.5vw, 1rem);
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--accent-hang);
+    transition: color var(--transition-state);
+    min-height: 1.4em;
+  }
+
+  /* ── Set counter ── */
+  #set-counter {
+    font-family: var(--font-ui);
+    font-size: clamp(0.78rem, 3vw, 0.9rem);
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── State color transitions ── */
+  #app-wrapper.hang-state #ring-progress { stroke: var(--accent-hang); }
+  #app-wrapper.hang-state #state-label   { color: var(--accent-hang); }
+  #app-wrapper.hang-state #countdown     { color: var(--text); }
+
+  #app-wrapper.rest-state #ring-progress { stroke: var(--accent-rest); }
+  #app-wrapper.rest-state #state-label   { color: var(--accent-rest); }
+
+  #app-wrapper.done-state #ring-progress { stroke: var(--accent-done); }
+  #app-wrapper.done-state #state-label   { color: var(--accent-done); }
+
+  /* ── Controls section ── */
+  #controls-section {
+    width: 100%;
+    margin-bottom: 24px;
+  }
+
+  #controls {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .btn {
+    flex: 1;
+    min-height: 60px;
+    border: none;
+    border-radius: 6px;
+    font-family: var(--font-display);
+    font-size: clamp(0.8rem, 3.5vw, 0.95rem);
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s, background-color var(--transition-state);
+    -webkit-tap-highlight-color: transparent;
+    outline-offset: 3px;
+  }
+
+  .btn:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 3px;
+  }
+
+  .btn:active { transform: scale(0.97); }
+
+  #btn-start {
+    background-color: var(--accent-hang);
+    color: #fff;
+    flex: 2;
+  }
+
+  #btn-start:hover { opacity: 0.88; }
+
+  #app-wrapper.rest-state #btn-start { background-color: var(--accent-rest); }
+  #app-wrapper.done-state #btn-start { background-color: var(--accent-done); }
+
+  #btn-reset {
+    background-color: var(--surface-2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+
+  #btn-reset:hover { color: var(--text); border-color: var(--text-muted); }
+
+  /* ── Settings section ── */
+  #settings-section {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  #settings-section > h2 {
+    font-family: var(--font-display);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+
+  #settings {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .settings-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .setting-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .setting-item label {
+    font-family: var(--font-ui);
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    text-align: center;
+    line-height: 1.2;
+    user-select: none;
+  }
+
+  .setting-item label span {
+    display: block;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  .setting-item input[type="number"] {
+    width: 100%;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: var(--font-display);
+    font-size: clamp(1.1rem, 5vw, 1.4rem);
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 6px;
+    min-height: 54px;
+    -moz-appearance: textfield;
+    appearance: textfield;
+    transition: border-color 0.15s, opacity 0.2s;
+  }
+
+  .setting-item input[type="number"]::-webkit-inner-spin-button,
+  .setting-item input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .setting-item input[type="number"]:focus {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+    border-color: var(--text-muted);
+  }
+
+  .setting-item input[type="number"]:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* ── Sound toggle + Help row ── */
+  .settings-bottom-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 4px;
+  }
+
+  .sound-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .sound-toggle input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--accent-hang);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .sound-toggle input[type="checkbox"]:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+  }
+
+  .sound-toggle label {
+    font-family: var(--font-ui);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    letter-spacing: 0.02em;
+  }
+
+  #btn-help {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-family: var(--font-ui);
+    font-size: 0.78rem;
+    padding: 6px 12px;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  #btn-help:hover { color: var(--text); border-color: var(--text-muted); }
+  #btn-help:focus-visible { outline: 2px solid var(--border-focus); outline-offset: 2px; }
+
+  /* ── Help panel ── */
+  #help-panel {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 20px;
+    margin-top: 14px;
+  }
+
+  #help-panel h3 {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  #help-panel p {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.65;
+    margin-bottom: 10px;
+  }
+
+  #help-panel p:last-child { margin-bottom: 0; }
+
+  #help-panel strong { color: var(--text); font-weight: 600; }
+
+  /* ── Divider ── */
+  .divider {
+    width: 100%;
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 20px 0;
+  }
+
+  /* ── Affiliate section ── */
+  #affiliate-section {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  #affiliate-section > h2 {
+    font-family: var(--font-display);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+
+  #affiliate-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.18s, background-color 0.18s;
+  }
+
+  #affiliate-card:hover {
+    border-color: var(--accent-hang);
+    background-color: var(--surface-2);
+  }
+
+  #affiliate-card:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 3px;
+  }
+
+  .affiliate-icon {
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    background-color: var(--surface-2);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .affiliate-text p {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin-bottom: 4px;
+  }
+
+  .affiliate-text strong {
+    font-size: 0.88rem;
+    color: var(--text);
+    display: block;
+  }
+
+  .affiliate-arrow {
+    margin-left: auto;
+    color: var(--accent-hang);
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  /* ── Ad section ── */
+  #ad-section {
+    width: 100%;
+  }
+
+  #ad-banner {
+    width: 100%;
+    min-height: 90px;
+    background-color: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #ad-banner p {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* ── Responsive ── */
+  @media (min-width: 480px) {
+    #app-wrapper { padding: 0 24px 64px; }
+    header { padding: 36px 0 16px; margin-bottom: 36px; }
+    .btn { min-height: 68px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app-wrapper">
+
+  <!-- Header -->
+  <header>
+    <h1>Hang<span>board</span> Timer</h1>
+  </header>
+
+  <!-- Timer Section -->
+  <section id="timer-section" aria-label="Timer">
+    <h2 class="visually-hidden">Timer</h2>
+
+    <div id="timer-ring-wrap">
+      <!-- Decorative SVG ring — screen readers use text countdown instead -->
+      <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+        <circle class="ring-track" cx="50" cy="50" r="44"/>
+        <circle id="ring-progress" cx="50" cy="50" r="44"
+          stroke-dasharray="276.46"
+          stroke-dashoffset="0"/>
+      </svg>
+
+      <div id="timer-center">
+        <div id="countdown" role="timer" aria-live="assertive" aria-atomic="true">
+          --
+        </div>
+        <div id="state-label" aria-hidden="true">READY</div>
+      </div>
+    </div>
+
+    <div id="set-counter" aria-live="polite" aria-atomic="true">
+      Set — of —
+    </div>
+  </section>
+
+  <!-- Controls Section -->
+  <section id="controls-section" aria-label="Controls">
+    <h2 class="visually-hidden">Controls</h2>
+    <div id="controls">
+      <button id="btn-start" class="btn" aria-label="Start timer">START</button>
+      <button id="btn-reset" class="btn" aria-label="Reset timer">RESET</button>
+    </div>
+  </section>
+
+  <!-- Settings Section -->
+  <section id="settings-section" aria-label="Settings">
+    <h2>Settings</h2>
+    <div id="settings">
+      <div class="settings-row">
+
+        <div class="setting-item">
+          <label for="input-hang">
+            Hang
+            <span>seconds</span>
+          </label>
+          <input type="number" id="input-hang" inputmode="numeric" min="1" value="10"
+                 aria-label="Hang time in seconds">
+        </div>
+
+        <div class="setting-item">
+          <label for="input-rest">
+            Rest
+            <span>seconds</span>
+          </label>
+          <input type="number" id="input-rest" inputmode="numeric" min="1" value="30"
+                 aria-label="Rest time in seconds">
+        </div>
+
+        <div class="setting-item">
+          <label for="input-sets">
+            Sets
+            <span>count</span>
+          </label>
+          <input type="number" id="input-sets" inputmode="numeric" min="1" value="5"
+                 aria-label="Number of sets">
+        </div>
+
+      </div><!-- /.settings-row -->
+
+      <div class="settings-bottom-row">
+        <div class="sound-toggle">
+          <input type="checkbox" id="chk-sound" checked aria-label="Enable sounds">
+          <label for="chk-sound">Enable sounds</label>
+        </div>
+        <button id="btn-help" aria-expanded="false" aria-controls="help-panel">? Help</button>
+      </div>
+
+      <!-- Help panel -->
+      <div id="help-panel" hidden>
+        <h3>How to use</h3>
+        <p><strong>Set your times:</strong> Enter the number of seconds for each hang, rest period, and how many sets you want to complete.</p>
+        <p><strong>Start training:</strong> Press <strong>START</strong> to begin. The timer counts down your hang, then automatically switches to rest, repeating for the number of sets you set.</p>
+        <p><strong>Sounds:</strong> A high beep signals the start of a hang; a lower tone signals rest. Disable sounds with the checkbox above if training in a quiet environment.</p>
+        <p><strong>Pause &amp; reset:</strong> <strong>PAUSE</strong> freezes the timer mid-session. <strong>RESET</strong> returns to the beginning without changing your settings.</p>
+        <p><strong>Settings are saved</strong> automatically between visits, so you can close and reopen the app without losing your configuration.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- Affiliate Section -->
+  <section id="affiliate-section" aria-label="Recommended gear">
+    <h2>Recommended Gear</h2>
+    <a id="affiliate-card" href="#" rel="noopener sponsored" aria-label="Shop the hangboard I use — affiliate link">
+      <div class="affiliate-icon" aria-hidden="true">
+        <!-- Inline hangboard SVG icon -->
+        <svg width="36" height="28" viewBox="0 0 36 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="1" y="5" width="34" height="18" rx="3" stroke="#e8621a" stroke-width="1.8" fill="none"/>
+          <rect x="4" y="8" width="6" height="6" rx="1.5" fill="#e8621a" opacity="0.6"/>
+          <rect x="13" y="8" width="10" height="4" rx="1.5" fill="#e8621a" opacity="0.4"/>
+          <rect x="26" y="8" width="6" height="6" rx="1.5" fill="#e8621a" opacity="0.6"/>
+          <rect x="4" y="16" width="28" height="3" rx="1.5" fill="#e8621a" opacity="0.25"/>
+          <line x1="10" y1="1" x2="10" y2="5" stroke="#e8621a" stroke-width="1.6" stroke-linecap="round"/>
+          <line x1="26" y1="1" x2="26" y2="5" stroke="#e8621a" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="affiliate-text">
+        <p>Train on the same board I use</p>
+        <strong>Shop on Amazon →</strong>
+      </div>
+    </a>
+  </section>
+
+  <hr class="divider">
+
+  <!-- Ad Section -->
+  <section id="ad-section" aria-label="Advertisement">
+    <h2 class="visually-hidden">Advertisement</h2>
+    <div id="ad-banner" aria-label="Advertisement placeholder">
+      <p>Advertisement</p>
+    </div>
+  </section>
+
+</div><!-- /#app-wrapper -->
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── Constants ── */
+  const CIRCUMFERENCE = 2 * Math.PI * 44; // 276.46
+
+  /* ── State ── */
+  let state = 'idle'; // idle | hanging | resting | done
+  let currentSet = 0;
+  let totalSets = 5;
+  let timeRemaining = 0;
+  let totalTime = 0;
+  let intervalId = null;
+  let audioCtx = null;
+
+  /* ── DOM refs ── */
+  const wrapper    = document.getElementById('app-wrapper');
+  const countdown  = document.getElementById('countdown');
+  const stateLabel = document.getElementById('state-label');
+  const setCounter = document.getElementById('set-counter');
+  const ringProgress = document.getElementById('ring-progress');
+  const btnStart   = document.getElementById('btn-start');
+  const btnReset   = document.getElementById('btn-reset');
+  const inputHang  = document.getElementById('input-hang');
+  const inputRest  = document.getElementById('input-rest');
+  const inputSets  = document.getElementById('input-sets');
+  const chkSound   = document.getElementById('chk-sound');
+  const btnHelp    = document.getElementById('btn-help');
+  const helpPanel  = document.getElementById('help-panel');
+  const allInputs  = [inputHang, inputRest, inputSets];
+
+  /* ── localStorage ── */
+  const KEYS = {
+    hang:  'hbt_hangTime',
+    rest:  'hbt_restTime',
+    sets:  'hbt_sets',
+    sound: 'hbt_soundEnabled',
+  };
+
+  function loadSettings() {
+    const hang  = localStorage.getItem(KEYS.hang);
+    const rest  = localStorage.getItem(KEYS.rest);
+    const sets  = localStorage.getItem(KEYS.sets);
+    const sound = localStorage.getItem(KEYS.sound);
+    if (hang  !== null) inputHang.value  = hang;
+    if (rest  !== null) inputRest.value  = rest;
+    if (sets  !== null) inputSets.value  = sets;
+    if (sound !== null) chkSound.checked = sound === 'true';
+  }
+
+  function saveSettings() {
+    localStorage.setItem(KEYS.hang,  inputHang.value);
+    localStorage.setItem(KEYS.rest,  inputRest.value);
+    localStorage.setItem(KEYS.sets,  inputSets.value);
+    localStorage.setItem(KEYS.sound, chkSound.checked);
+  }
+
+  function clampInput(input) {
+    const val = parseInt(input.value, 10);
+    if (isNaN(val) || val < 1) input.value = 1;
+    saveSettings();
+  }
+
+  /* ── Audio ── */
+  function initAudio() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    // Resume suspended context (mobile browsers)
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function playTone(freq, duration, type = 'sine') {
+    if (!chkSound.checked) return;
+    try {
+      initAudio();
+      const osc  = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + duration);
+    } catch (e) { /* silently ignore audio errors */ }
+  }
+
+  function playHangTone() { playTone(880, 0.15, 'square'); }
+  function playRestTone()  { playTone(440, 0.30, 'sine');   }
+  function playDoneTone()  {
+    playTone(523, 0.15, 'sine');
+    setTimeout(() => playTone(659, 0.15, 'sine'), 160);
+    setTimeout(() => playTone(784, 0.30, 'sine'), 320);
+  }
+
+  /* ── Ring update ── */
+  function updateRing(remaining, total) {
+    const pct = total > 0 ? remaining / total : 1;
+    const offset = CIRCUMFERENCE * (1 - pct);
+    ringProgress.style.strokeDashoffset = offset;
+  }
+
+  /* ── Display update ── */
+  function updateDisplay() {
+    countdown.textContent = timeRemaining;
+    countdown.classList.remove('tick');
+    // Force reflow to restart animation
+    void countdown.offsetWidth;
+    countdown.classList.add('tick');
+    updateRing(timeRemaining, totalTime);
+  }
+
+  /* ── Set counter ── */
+  function updateSetCounter() {
+    if (state === 'idle') {
+      setCounter.textContent = 'Set — of —';
+    } else {
+      setCounter.textContent = `Set ${currentSet} of ${totalSets}`;
+    }
+  }
+
+  /* ── State classes ── */
+  function setWrapperState(s) {
+    wrapper.classList.remove('hang-state', 'rest-state', 'done-state');
+    if (s === 'hanging') wrapper.classList.add('hang-state');
+    if (s === 'resting') wrapper.classList.add('rest-state');
+    if (s === 'done')    wrapper.classList.add('done-state');
+  }
+
+  /* ── Transition to HANGING ── */
+  function startHang() {
+    state = 'hanging';
+    const hangSecs = Math.max(1, parseInt(inputHang.value, 10) || 1);
+    timeRemaining = hangSecs;
+    totalTime = hangSecs;
+    setWrapperState('hanging');
+    stateLabel.textContent = 'HANG';
+    updateDisplay();
+    updateSetCounter();
+    playHangTone();
+  }
+
+  /* ── Transition to RESTING ── */
+  function startRest() {
+    state = 'resting';
+    const restSecs = Math.max(1, parseInt(inputRest.value, 10) || 1);
+    timeRemaining = restSecs;
+    totalTime = restSecs;
+    setWrapperState('resting');
+    stateLabel.textContent = 'REST';
+    updateDisplay();
+    updateSetCounter();
+    playRestTone();
+  }
+
+  /* ── Transition to DONE ── */
+  function finishWorkout() {
+    state = 'done';
+    clearInterval(intervalId);
+    intervalId = null;
+    setWrapperState('done');
+    countdown.textContent = '✓';
+    countdown.classList.remove('tick');
+    stateLabel.textContent = 'DONE';
+    setCounter.textContent = `${totalSets} set${totalSets !== 1 ? 's' : ''} complete`;
+    ringProgress.style.strokeDashoffset = 0;
+    btnStart.textContent = 'RESTART';
+    btnStart.setAttribute('aria-label', 'Restart workout');
+    enableSettings(true);
+    playDoneTone();
+  }
+
+  /* ── Tick ── */
+  function tick() {
+    timeRemaining--;
+
+    if (timeRemaining > 0) {
+      updateDisplay();
+      return;
+    }
+
+    // Time's up — transition
+    if (state === 'hanging') {
+      if (currentSet >= totalSets) {
+        finishWorkout();
+      } else {
+        startRest();
+      }
+    } else if (state === 'resting') {
+      currentSet++;
+      if (currentSet > totalSets) {
+        finishWorkout();
+      } else {
+        startHang();
+      }
+    }
+  }
+
+  /* ── Enable / disable settings ── */
+  function enableSettings(enabled) {
+    allInputs.forEach(inp => { inp.disabled = !enabled; });
+  }
+
+  /* ── Start / Pause ── */
+  function handleStart() {
+    initAudio(); // Ensure audio context ready on first interaction
+
+    if (state === 'idle' || state === 'done') {
+      // Fresh start
+      totalSets  = Math.max(1, parseInt(inputSets.value,  10) || 1);
+      currentSet = 1;
+      enableSettings(false);
+      btnStart.textContent = 'PAUSE';
+      btnStart.setAttribute('aria-label', 'Pause timer');
+      startHang();
+      intervalId = setInterval(tick, 1000);
+
+    } else if (state === 'hanging' || state === 'resting') {
+      // Pause
+      clearInterval(intervalId);
+      intervalId = null;
+      state = 'paused_' + (state === 'hanging' ? 'hang' : 'rest');
+      btnStart.textContent = 'RESUME';
+      btnStart.setAttribute('aria-label', 'Resume timer');
+
+    } else if (state.startsWith('paused_')) {
+      // Resume
+      const resumeState = state === 'paused_hang' ? 'hanging' : 'resting';
+      state = resumeState;
+      btnStart.textContent = 'PAUSE';
+      btnStart.setAttribute('aria-label', 'Pause timer');
+      intervalId = setInterval(tick, 1000);
+    }
+  }
+
+  /* ── Reset ── */
+  function handleReset() {
+    clearInterval(intervalId);
+    intervalId = null;
+    state = 'idle';
+    currentSet = 0;
+    timeRemaining = 0;
+
+    wrapper.classList.remove('hang-state', 'rest-state', 'done-state');
+    countdown.textContent = '--';
+    countdown.classList.remove('tick');
+    stateLabel.textContent = 'READY';
+    ringProgress.style.strokeDashoffset = 0;
+    btnStart.textContent = 'START';
+    btnStart.setAttribute('aria-label', 'Start timer');
+    updateSetCounter();
+    enableSettings(true);
+  }
+
+  /* ── Help toggle ── */
+  function toggleHelp() {
+    const expanded = btnHelp.getAttribute('aria-expanded') === 'true';
+    btnHelp.setAttribute('aria-expanded', String(!expanded));
+    helpPanel.hidden = expanded;
+    btnHelp.textContent = expanded ? '? Help' : '✕ Help';
+  }
+
+  /* ── Event listeners ── */
+  btnStart.addEventListener('click', handleStart);
+  btnReset.addEventListener('click', handleReset);
+  btnHelp.addEventListener('click', toggleHelp);
+
+  allInputs.forEach(inp => {
+    inp.addEventListener('change', saveSettings);
+    inp.addEventListener('blur',   () => clampInput(inp));
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') clampInput(inp); });
+  });
+
+  chkSound.addEventListener('change', saveSettings);
+
+  /* ── Init ── */
+  loadSettings();
+  updateSetCounter();
+
+})();
+</script>
+</body>
+</html>
