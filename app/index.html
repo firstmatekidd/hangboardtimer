@@ -996,7 +996,7 @@
   }
 
   // Hang: ~880 Hz short square wave — sharp and attention-getting
-  function playHangTone() { playTone(880, 0.15, 'square'); vibrate([80, 40, 80]); }
+  function playHangTone() { playTone(880, 0.4, 'square'); vibrate([80, 40, 80]); }
   // Rest: ~440 Hz longer sine — softer, signals downtime
   function playRestTone()  { playTone(440, 0.30, 'sine');   vibrate(150); }
   // Tick: soft click for countdown lead-in
