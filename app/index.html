@@ -134,7 +134,7 @@
 
   #ring-progress {
     fill: none;
-    stroke: var(--accent-hang);
+    stroke: transparent;
     stroke-width: var(--ring-stroke);
     stroke-linecap: round;
     transition: stroke var(--transition-state);
@@ -1050,7 +1050,11 @@
      Deferring by one rAF lets the colour transition start cleanly first.
   */
   function updateRingDeferred(remaining, total) {
-    requestAnimationFrame(function () { updateRing(remaining, total); });
+    requestAnimationFrame(function () {
+      ringProgress.style.transition = 'none';
+      updateRing(remaining, total);
+      requestAnimationFrame(function () { ringProgress.style.transition = ''; });
+    });
   }
 
   /* ── Display (called every tick) ── */
