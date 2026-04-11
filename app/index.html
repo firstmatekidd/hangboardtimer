@@ -208,6 +208,9 @@
   #app-wrapper.done-state #state-label   { color: var(--accent-done); }
   #app-wrapper.done-state #btn-start     { background-color: var(--accent-done); }
 
+  #app-wrapper.rest-warning-state #ring-progress { stroke: var(--text-muted); }
+  #app-wrapper.rest-warning-state #state-label   { color: var(--text-muted); }
+
   /* ── Paused state — dim the timer area ── */
   #app-wrapper.paused-state #timer-ring-wrap {
     opacity: 0.4;
@@ -1041,6 +1044,15 @@
     ringProgress.style.strokeDashoffset = offset;
   }
 
+  /* ── Ring update deferred to next frame (used on phase transitions) ──
+     Writing strokeDashoffset inline in the same frame as a class swap
+     forces a style flush that interrupts the CSS stroke colour transition.
+     Deferring by one rAF lets the colour transition start cleanly first.
+  */
+  function updateRingDeferred(remaining, total) {
+    requestAnimationFrame(function () { updateRing(remaining, total); });
+  }
+
   /* ── Display (called every tick) ── */
   function updateDisplay() {
     countdownDisplay.textContent = timeRemaining;
@@ -1065,14 +1077,14 @@
      so colours don't reset to default while paused.
   */
   function setWrapperState(s) {
-    wrapper.classList.remove('get-ready-state', 'hang-state', 'rest-state', 'done-state', 'paused-state');
+    wrapper.classList.remove('get-ready-state', 'hang-state', 'rest-state', 'rest-warning-state', 'done-state', 'paused-state');
     if (s === 'get_ready')                          wrapper.classList.add('get-ready-state');
     if (s === 'paused_get_ready')                   wrapper.classList.add('get-ready-state', 'paused-state');
     if (s === 'hanging')                            wrapper.classList.add('hang-state');
-    if (s === 'resting')                        wrapper.classList.add('rest-state');
-    if (s === 'paused_hang')                    wrapper.classList.add('hang-state', 'paused-state');
-    if (s === 'paused_rest')                    wrapper.classList.add('rest-state', 'paused-state');
-    if (s === 'done')                           wrapper.classList.add('done-state');
+    if (s === 'resting')                            wrapper.classList.add('rest-state');
+    if (s === 'paused_hang')                        wrapper.classList.add('hang-state', 'paused-state');
+    if (s === 'paused_rest')                        wrapper.classList.add('rest-state', 'paused-state');
+    if (s === 'done')                               wrapper.classList.add('done-state');
   }
 
   /* ── Settings lock (no-op — settings remain editable during session) ── */
@@ -1089,7 +1101,9 @@
     timeRemaining   = 3;
     setWrapperState('get_ready');
     stateLabel.textContent = 'GET READY';
-    updateDisplay();
+    countdownDisplay.textContent = 3;
+    countdown.setAttribute('aria-label', '3 seconds');
+    updateRingDeferred(3, 3);
     updateSetCounter();
     playTickTone();
     announce('Get ready.');
@@ -1107,7 +1121,9 @@
     timeRemaining   = hangSecs;
     setWrapperState('hanging');
     stateLabel.textContent = 'HANG';
-    updateDisplay();
+    countdownDisplay.textContent = hangSecs;
+    countdown.setAttribute('aria-label', hangSecs + ' seconds');
+    updateRingDeferred(hangSecs, hangSecs);
     updateSetCounter();
     playHangTone();
     announce('Hang. Set ' + currentSet + ' of ' + totalSets + '. ' + hangSecs + ' seconds.');
@@ -1125,7 +1141,9 @@
     timeRemaining   = restSecs;
     setWrapperState('resting');
     stateLabel.textContent = 'REST';
-    updateDisplay();
+    countdownDisplay.textContent = restSecs;
+    countdown.setAttribute('aria-label', restSecs + ' seconds');
+    updateRingDeferred(restSecs, restSecs);
     updateSetCounter();
     playRestTone();
     var setsLeft = totalSets - currentSet;
@@ -1188,6 +1206,17 @@
       // Tick tones on last 3 seconds (and all of get_ready)
       if (display > 0 && (state === 'get_ready' || display <= 3)) {
         playTickTone();
+      }
+
+      // During rest: switch label + ring to hang colour for the last 3s countdown
+      if (state === 'resting') {
+        if (display <= 3 && display > 0) {
+          wrapper.classList.add('rest-warning-state');
+          stateLabel.textContent = 'GET READY';
+        } else {
+          wrapper.classList.remove('rest-warning-state');
+          stateLabel.textContent = 'REST';
+        }
       }
     }
 
