@@ -22,8 +22,7 @@
     --ring-size:     min(58vw, 52vh, 300px);
     --ring-stroke:   10;
     --transition-state: 300ms ease;
-    --font-display: 'Courier New', Courier, monospace;
-    --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
+    --font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
   }
 
   /* ── Reset ── */
@@ -46,7 +45,7 @@
   body {
     background-color: var(--bg);
     color: var(--text);
-    font-family: var(--font-ui);
+    font-family: var(--font-display);
     min-height: 100svh;
     display: flex;
     flex-direction: column;
@@ -187,7 +186,7 @@
 
   /* ── Set counter ── */
   #set-counter {
-    font-family: var(--font-ui);
+    font-family: var(--font-display);
     font-size: clamp(0.78rem, 3vw, 0.9rem);
     color: var(--text-muted);
     letter-spacing: 0.08em;
@@ -293,7 +292,7 @@
   }
 
   .setting-item label {
-    font-family: var(--font-ui);
+    font-family: var(--font-display);
     font-size: 0.72rem;
     color: var(--text-muted);
     letter-spacing: 0.05em;
@@ -374,7 +373,7 @@
   }
 
   .sound-toggle label {
-    font-family: var(--font-ui);
+    font-family: var(--font-display);
     font-size: 0.8rem;
     color: var(--text-muted);
     cursor: pointer;
@@ -402,7 +401,7 @@
   }
 
   .haptic-toggle label {
-    font-family: var(--font-ui);
+    font-family: var(--font-display);
     font-size: 0.8rem;
     color: var(--text-muted);
     cursor: pointer;
@@ -419,7 +418,7 @@
     border: 1px solid var(--border);
     border-radius: 4px;
     color: var(--text-muted);
-    font-family: var(--font-ui);
+    font-family: var(--font-display);
     font-size: 0.78rem;
     padding: 6px 12px;
     cursor: pointer;
